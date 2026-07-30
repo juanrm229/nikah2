@@ -1,26 +1,196 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Sistem desain: Tenun × Paspor
+   Monokrom hangat (diambil dari foto B&W + tenun ikat hitam-putih),
+   dengan emas antik sebagai foil dan navy tinta sebagai sampul paspor.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* Tinta — dari hitam kain tenun */
+  --color-ink: #12100e;
+  --color-ink-2: #1c1916;
+  --color-ink-3: #2a2622;
+  --color-ink-soft: #4a453e;
+
+  /* Kertas — dari putih gading kain & kertas paspor */
+  --color-paper: #f2ede4;
+  --color-paper-2: #e9e2d5;
+  --color-paper-3: #d9d0be;
+  --color-paper-dim: #a89f8e;
+
+  /* Foil emas antik */
+  --color-gold: #b08d4f;
+  --color-gold-2: #d8b878;
+  --color-gold-3: #8a6c39;
+
+  /* Sampul paspor */
+  --color-cover: #0e1526;
+  --color-cover-2: #16203a;
+
+  /* Stempel imigrasi */
+  --color-stamp: #2f4b7c;
+  --color-stamp-red: #8c2f2f;
+
+  --font-display: var(--font-display), "Cormorant Garamond", serif;
+  --font-body: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+  --font-arabic: var(--font-arabic), serif;
+
+  /* Ritme vertikal antar section */
+  --spacing-section: 7rem;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  --bg: var(--color-ink);
+  --fg: var(--color-paper);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  /* Lenis mengambil alih; matikan smooth bawaan browser agar tidak bertabrakan */
+  scroll-behavior: auto;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ── Utilitas bersama ────────────────────────────────────────────────────── */
+
+/* Judul serif dengan spasi lega, dipakai untuk nama & heading section */
+@utility display {
+  font-family: var(--font-display);
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+/* Label kecil ala kolom data paspor */
+@utility field-label {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-paper-dim);
+}
+
+/* Baris MRZ paspor (machine readable zone) */
+@utility mrz {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  word-break: break-all;
+}
+
+/* Foil emas yang memantul — dipakai pada teks emboss sampul */
+@utility foil {
+  background: linear-gradient(
+    100deg,
+    var(--color-gold-3) 0%,
+    var(--color-gold) 22%,
+    var(--color-gold-2) 38%,
+    #f6e6c0 46%,
+    var(--color-gold-2) 54%,
+    var(--color-gold) 72%,
+    var(--color-gold-3) 100%
+  );
+  background-size: 220% 100%;
+  background-position: var(--foil-x, 50%) 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Tepi kertas bergerigi ala tiket/perangko.
+   Tiap lapisan masker selebar penuh dan setinggi satu jarak lubang, lalu
+   diulang ke bawah — bukan setengah lebar. Kalau tile dibuat selebar 51%
+   dan di-intersect, yang tersisa hanya irisan tipis di tengah dan seluruh
+   isi tiket ikut terpotong. */
+@utility perforated-y {
+  --perf: 6px;
+  --perf-gap: 17px;
+  mask-image:
+    radial-gradient(circle var(--perf) at left, transparent 97%, black 100%),
+    radial-gradient(circle var(--perf) at right, transparent 97%, black 100%);
+  mask-size: 100% var(--perf-gap);
+  mask-repeat: repeat-y;
+  /* Peramban tanpa dukungan mask-composite akan menggabung lapisan dengan
+     "add", sehingga lubangnya hilang — tiket tetap utuh, hanya tepinya rata. */
+  mask-composite: intersect;
+}
+
+/* Tepi atas bergerigi — kertas yang disobek dari bonggolnya.
+   Lubang setengah lingkaran benar-benar dipotong (transparan), bukan ditimpa
+   warna, sehingga apa pun yang ada di belakang kartu ikut terlihat. */
+@utility torn-top {
+  --tooth: 9px;
+  mask-image: radial-gradient(circle 4.5px at 50% 0, transparent 98%, black 100%);
+  mask-size: var(--tooth) 100%;
+  mask-repeat: repeat-x;
+}
+
+/* Grain kertas halus, ditumpuk di atas panel terang */
+@utility grain {
+  position: relative;
+}
+@utility grain-layer {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.055;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Lipatan daun papan split-flap: jatuh dari atas lalu mendarat. */
+@keyframes flap {
+  0% {
+    transform: rotateX(-72deg) translateY(-14%);
+    opacity: 0.35;
+  }
+  100% {
+    transform: rotateX(0deg) translateY(0);
+    opacity: 1;
+  }
+}
+@utility animate-flap {
+  animation: flap 90ms ease-out;
+  transform-origin: center bottom;
+  backface-visibility: hidden;
+}
+
+/* ── Aksesibilitas ───────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-ink);
 }
