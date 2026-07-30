@@ -183,8 +183,10 @@ export const wedding = {
 
   // ── Teknis ───────────────────────────────────────────────────────────────
   site: {
-    // TODO: domain final, dipakai untuk QR check-in & metadata share
-    url: "https://undangan.example.com",
+    // Domain produksi Vercel, sudah live dan terverifikasi. Dipakai membentuk
+    // isi QR check-in, jadi harus domain yang benar-benar dibuka tamu.
+    // Ganti kalau nanti dipasang domain kustom.
+    url: "https://nikah2.vercel.app",
     defaultGuest: "Bapak/Ibu/Saudara/i",
   },
 } as const;
