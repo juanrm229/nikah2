@@ -1,31 +1,57 @@
 import type { WeddingEvent } from "@/config/wedding";
 
-/** Format tanggal panjang Indonesia: "Minggu, 20 Desember 2026". */
+/** Offset di ujung string ISO, dalam menit. null kalau tidak ada. */
+function offsetMinutes(iso: string) {
+  const m = iso.match(/([+-])(\d{2}):(\d{2})$/);
+  if (!m) return null;
+  return (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3]));
+}
+
+/**
+ * Waktu dinding di lokasi acara, bukan di perangkat tamu.
+ *
+ * Jam acara HARUS ditampilkan menurut offset yang tertulis di konfigurasi —
+ * tamu di Jakarta dan tamu di Balikpapan wajib melihat angka yang sama, dan
+ * angka itu harus cocok dengan label WIB/WITA/WIT di sebelahnya. Karena
+ * dukungan `timeZone` untuk offset numerik ("+08:00") masih belum merata di
+ * semua peramban ponsel, waktunya digeser sebesar offset lalu diformat sebagai
+ * UTC — hasilnya sama tapi jalan di mana saja.
+ */
+function atEventZone(iso: string) {
+  const off = offsetMinutes(iso);
+  const d = new Date(iso);
+  // Tanpa offset, jatuh kembali ke WIB seperti perilaku sebelumnya.
+  if (off === null) return { date: d, timeZone: "Asia/Jakarta" };
+  return { date: new Date(d.getTime() + off * 60_000), timeZone: "UTC" };
+}
+
+/** Format tanggal panjang Indonesia: "Minggu, 15 November 2026". */
 export function formatDateLong(iso: string) {
-  return new Date(iso).toLocaleDateString("id-ID", {
+  const { date, timeZone } = atEventZone(iso);
+  return date.toLocaleDateString("id-ID", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
-    timeZone: "Asia/Jakarta",
+    timeZone,
   });
 }
 
-/** Jam lokal acara: "08.00". */
+/** Jam lokal acara: "10.00". */
 export function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("id-ID", {
+  const { date, timeZone } = atEventZone(iso);
+  return date.toLocaleTimeString("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "Asia/Jakarta",
+    timeZone,
   });
 }
 
 /** Zona waktu yang dipakai acara, diambil dari offset di konfigurasi. */
 export function zoneLabel(iso: string) {
-  const m = iso.match(/([+-])(\d{2}):(\d{2})$/);
-  if (!m) return "";
-  const hours = Number(m[2]) * (m[1] === "-" ? -1 : 1);
-  return { 7: "WIB", 8: "WITA", 9: "WIT" }[hours] ?? "";
+  const off = offsetMinutes(iso);
+  if (off === null || off % 60 !== 0) return "";
+  return { 7: "WIB", 8: "WITA", 9: "WIT" }[off / 60] ?? "";
 }
 
 export type Countdown = {
