@@ -60,6 +60,17 @@ export type Photo = {
   created_at: string;
 };
 
+export type Track = {
+  id: string;
+  storage_path: string;
+  title: string | null;
+  artist: string | null;
+  mime: string;
+  bytes: number;
+  active: boolean;
+  created_at: string;
+};
+
 export type Checkin = {
   id: string;
   guest_id: string;

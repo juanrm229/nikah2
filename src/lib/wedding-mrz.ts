@@ -40,8 +40,16 @@ export function coupleMrz() {
   });
 }
 
+/**
+ * MRZ untuk boarding pass tamu. Jenis kelamin diisi `<` (tidak ditentukan) —
+ * kita tidak tahu, dan tidak perlu tahu, untuk mencetak undangan.
+ */
+export function guestMrz(name: string) {
+  return personMrz(name, "<");
+}
+
 /** MRZ per mempelai untuk halaman data diri. */
-export function personMrz(fullName: string, sex: "M" | "F") {
+export function personMrz(fullName: string, sex: "M" | "F" | "<") {
   const parts = fullName.trim().split(/\s+/);
   // Kata terakhir diperlakukan sebagai nama utama, sisanya nama depan —
   // konvensi yang dipakai paspor untuk nama tanpa marga.

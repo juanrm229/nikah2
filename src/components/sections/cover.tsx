@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { wedding } from "@/config/wedding";
+import { withSoftBreaks } from "@/lib/text";
 import { IkatBand, IkatField } from "@/components/tenun/ikat";
 import { TenunEmblem } from "@/components/tenun/emblem";
+import { eventDateParts } from "@/lib/datetime";
 import { coupleMrz } from "@/lib/wedding-mrz";
 
 const mrz = coupleMrz();
+const coverDate = eventDateParts(wedding.events[0].start);
 
 /**
  * Sampul paspor — layar pertama yang dilihat tamu.
@@ -128,15 +131,12 @@ export function Cover({
 
               <div className="mt-[clamp(1.25rem,4vh,2.25rem)] h-px w-16 bg-gold/40" />
 
+              {/* Tanggal lewat eventDateParts, bukan timeZone yang ditulis
+                  langsung — offset di konfigurasi yang menentukan, bukan zona
+                  perangkat tamu. Untuk acara WITA pagi keduanya kebetulan sama,
+                  tapi menggeser jam acara saja sudah cukup memundurkan tanggal. */}
               <p className="mrz mt-[clamp(0.85rem,2.5vh,1.5rem)] text-gold/55">
-                {new Date(wedding.events[0].start)
-                  .toLocaleDateString("id-ID", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    timeZone: "Asia/Jakarta",
-                  })
-                  .replaceAll("/", " · ")}
+                {[coverDate.day, coverDate.month, coverDate.year].join(" · ")}
               </p>
             </div>
           </div>
@@ -172,9 +172,14 @@ export function Cover({
               <div className="min-w-0 flex-1 text-left">
                 <p className="field-label text-ink-soft/80">Kepada Yth.</p>
                 {/* Nama panjang dibiarkan turun ke baris kedua, bukan dipotong —
-                    nama tamu adalah hal terakhir yang boleh dipangkas. */}
+                    nama tamu adalah hal terakhir yang boleh dipangkas.
+                    `overflow-wrap:anywhere` tetap dipertahankan sebagai jaring
+                    pengaman, tapi titik putus setelah garis miring diberikan
+                    lebih dulu lewat `withSoftBreaks` — tanpa itu sapaan bawaan
+                    "Bapak/Ibu/Saudara/i" patah di tengah kata jadi
+                    "Saudar / a/i". */}
                 <p className="display mt-1 text-[1.3rem] leading-tight text-balance break-words [overflow-wrap:anywhere] text-ink">
-                  {guestName || wedding.site.defaultGuest}
+                  {withSoftBreaks(guestName || wedding.site.defaultGuest)}
                 </p>
                 <p className="mrz mt-1.5 text-[0.45rem] text-ink-soft/55">
                   ADMIT<span className="mx-1">·</span>

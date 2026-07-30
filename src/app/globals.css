@@ -179,6 +179,60 @@ html.lenis body {
   backface-visibility: hidden;
 }
 
+/* Label bagasi yang berayun pelan di gantungannya.
+   Titik putarnya di lubang tali, bukan di tengah kartu — kalau di tengah,
+   tagnya tampak melayang, bukan menggantung. Amplitudo & durasi diatur
+   per-kartu lewat custom property agar tidak ada dua tag yang seirama. */
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(var(--sway-a, -1.7deg));
+  }
+  50% {
+    transform: rotate(var(--sway-b, 1.7deg));
+  }
+}
+@utility animate-sway {
+  animation: sway var(--sway-dur, 5.5s) ease-in-out infinite;
+  animation-delay: var(--sway-delay, 0s);
+  transform-origin: var(--sway-origin, 26% 2px);
+  will-change: transform;
+}
+
+/* Penyetara tiga batang di tombol musik. Dianimasikan dengan scaleY, bukan
+   height, supaya tidak memicu layout tiap frame — tombolnya melayang di atas
+   seluruh halaman, dan reflow di sana ikut menyeret isi undangan. */
+@keyframes eq {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+@utility animate-eq {
+  animation: eq 1.1s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Munculnya tombol musik. Dibuat sebagai animasi, bukan transisi: elemen yang
+   baru lahir tidak punya keadaan "sebelum" untuk ditransisikan — ia langsung
+   ada di keadaan akhir dan transisinya tidak pernah jalan. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@utility animate-rise-in {
+  animation: rise-in 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
 /* ── Aksesibilitas ───────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,

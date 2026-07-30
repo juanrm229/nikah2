@@ -47,6 +47,41 @@ export function formatTime(iso: string) {
   });
 }
 
+/**
+ * Format jam untuk timestamp yang datang dari database.
+ *
+ * `created_at` Postgres dikembalikan dengan offset `+00:00` (UTC). Kalau
+ * dilempar ke `formatTime`, ia dianggap sudah waktu setempat dan tampil apa
+ * adanya — check-in pukul 09.15 WITA akan terbaca 01.15. Jadi zonanya diambil
+ * dari string acara di konfigurasi, bukan dari timestamp-nya sendiri.
+ */
+export function formatTimeInEventZone(iso: string, zoneSource: string) {
+  const off = offsetMinutes(zoneSource) ?? 420; // jatuh ke WIB kalau config tanpa offset
+  const shifted = new Date(new Date(iso).getTime() + off * 60_000);
+  return shifted.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * Bagian tanggal menurut waktu dinding acara, dua digit.
+ *
+ * Ada supaya tidak ada lagi tempat yang membaca `getUTCDate()` langsung dari
+ * string ISO ber-offset. Untuk acara WITA jam 08.00 hal itu memang kebetulan
+ * benar, tapi menggeser jam acara beberapa jam saja sudah cukup membuatnya
+ * salah satu hari — jebakan yang sama seperti bug WITA yang pernah terjadi.
+ */
+export function eventDateParts(iso: string) {
+  const { date } = atEventZone(iso);
+  return {
+    day: String(date.getUTCDate()).padStart(2, "0"),
+    month: String(date.getUTCMonth() + 1).padStart(2, "0"),
+    year: String(date.getUTCFullYear()),
+  };
+}
+
 /** Zona waktu yang dipakai acara, diambil dari offset di konfigurasi. */
 export function zoneLabel(iso: string) {
   const off = offsetMinutes(iso);

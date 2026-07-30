@@ -133,6 +133,15 @@ export const wedding = {
     source: "QS. Ar-Rum: 21",
   },
 
+  // ── Penutup ──────────────────────────────────────────────────────────────
+  // Kalimat penutup undangan. Bukan data dari sumber, murni redaksi — boleh
+  // diganti sesuka hati tanpa memeriksa apa pun.
+  closing: {
+    note: "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir untuk memberikan doa restu kepada kedua mempelai.",
+    thanks: "Atas kehadiran dan doa restunya, kami mengucapkan terima kasih.",
+    sign: "Kami yang berbahagia",
+  },
+
   // ── Amplop digital ───────────────────────────────────────────────────────
   // Isinya MOCKUP, bukan rekening sebenarnya. Angkanya sengaja dibuat nol
   // semua supaya mustahil dikira nomor asli, tapi panjangnya dipertahankan
@@ -175,10 +184,18 @@ export const wedding = {
   cover: "/photos/foto-1.jpg",
 
   // ── Musik latar ──────────────────────────────────────────────────────────
+  //
+  // Berkas & judulnya TIDAK ditulis di sini. Panitia mengunggahnya lewat
+  // /admin, dan yang aktif disimpan di tabel `tracks` — jadi mengganti lagu
+  // tidak perlu commit + deploy ulang, dan berkas audio beberapa MB tidak ikut
+  // membengkakkan repo.
+  //
+  // `enabled` di sini tinggal saklar induk: dimatikan berarti pemutarnya tidak
+  // pernah dirender walaupun ada lagu aktif di database. Untuk mematikan musik
+  // sesaat sebelum acara, pakai tombol "Matikan musik" di /admin — itu tidak
+  // butuh deploy.
   music: {
     enabled: true,
-    src: "/music/backsound.mp3", // TODO: taruh file di public/music/
-    title: "", // TODO
   },
 
   // ── Teknis ───────────────────────────────────────────────────────────────

@@ -21,6 +21,7 @@ export function Stamp({
   size = 132,
   color = "var(--color-stamp)",
   className = "",
+  active,
 }: {
   /** Teks melengkung di busur atas. */
   top: string;
@@ -32,8 +33,15 @@ export function Stamp({
   size?: number;
   color?: string;
   className?: string;
+  /**
+   * Kendali manual. Dibiarkan kosong, stempel jatuh saat digulir ke layar —
+   * itu perilaku bawaan seluruh halaman paspor. Diisi, ia jatuh saat nilainya
+   * jadi true; dipakai checkpoint RSVP yang mengecap setelah tamu mengirim.
+   */
+  active?: boolean;
 }) {
   const [ref, inView] = useInView<HTMLDivElement>(0.5);
+  const shown = active ?? inView;
   const uid = useId().replace(/:/g, "");
   const arcTop = `arc-top-${uid}`;
   const arcBottom = `arc-bottom-${uid}`;
@@ -46,8 +54,8 @@ export function Stamp({
       style={{
         width: size,
         height: size,
-        opacity: inView ? 0.82 : 0,
-        transform: inView
+        opacity: shown ? 0.82 : 0,
+        transform: shown
           ? `rotate(${rotate}deg) scale(1)`
           : `rotate(${rotate - 8}deg) scale(1.7)`,
         // Kurva dengan overshoot: inilah yang bikin terasa "dicap", bukan "muncul".
