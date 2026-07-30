@@ -134,19 +134,29 @@ export const wedding = {
   },
 
   // ── Amplop digital ───────────────────────────────────────────────────────
-  // Dimatikan sampai data rekening yang SEBENARNYA tersedia. Nomor contoh
-  // sengaja tidak ditinggalkan di sini supaya tidak ada rekening karangan yang
-  // ikut ter-commit dan tidak ada tamu yang salah transfer.
-  // TODO: isi bank, nomor, dan nama pemilik rekening, lalu set enabled: true.
+  // Isinya MOCKUP, bukan rekening sebenarnya. Angkanya sengaja dibuat nol
+  // semua supaya mustahil dikira nomor asli, tapi panjangnya dipertahankan
+  // (BRI 15 digit, BCA 10 digit) agar tata letak dan pemenggalan teks bisa
+  // diuji dengan bentuk yang realistis.
+  //
+  // `enabled: false` adalah pengamannya, bukan sekadar bawaan: repo ini publik
+  // dan situsnya sudah live di produksi, jadi menyalakannya sebelum nomor asli
+  // masuk berarti memajang rekening karangan ke tamu yang mungkin benar-benar
+  // mentransfer. Nyalakan HANYA bersamaan dengan mengisi nomor yang sah.
+  //
+  // TODO: ganti seluruh isi banks dengan data sah, lalu set enabled: true.
   gift: {
     enabled: false,
-    banks: [] as { bank: string; number: string; holder: string }[],
+    banks: [
+      { bank: "BRI", number: "000000000000000", holder: "CONTOH — BELUM DIISI" },
+      { bank: "BCA", number: "0000000000", holder: "CONTOH — BELUM DIISI" },
+    ] as { bank: string; number: string; holder: string }[],
     qris: "", // TODO: path gambar QRIS di /public, cth "/qris.png"
     address: {
       // Kirim kado fisik
       label: "Kirim hadiah",
-      value: "", // TODO
-      recipient: "", // TODO
+      value: "CONTOH — BELUM DIISI", // TODO
+      recipient: "CONTOH — BELUM DIISI", // TODO
     },
   },
 
