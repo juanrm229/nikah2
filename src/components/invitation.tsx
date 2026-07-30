@@ -16,6 +16,8 @@ import { PhotoWall } from "@/components/sections/photo-wall";
 import { Closing } from "@/components/sections/closing";
 import { MusicPlayer } from "@/components/music/player";
 import { ScrollProvider } from "@/components/motion/scroll-provider";
+import { Dust } from "@/components/motion/dust";
+import { ScrollThread } from "@/components/motion/thread";
 import { IkatField } from "@/components/tenun/ikat";
 import { wedding } from "@/config/wedding";
 import type { ActiveTrack } from "@/lib/music";
@@ -63,9 +65,16 @@ export function Invitation({
       {/* Selama sampul tertutup, isi undangan disembunyikan dari pembaca layar
           dan dari fokus keyboard agar tidak bisa "ditembus" dengan Tab. */}
       <main aria-hidden={!opened} inert={!opened} className="relative">
+        {/* Latar tetap: motif tenun samar, lalu debu emas di atasnya. Debunya
+            duduk DI BELAKANG isi undangan, jadi ia hanya terlihat di sela-sela
+            gelap antar halaman — persis seperti udara di antara lembar kertas,
+            bukan bintik yang menempel di layar. */}
         <div className="pointer-events-none fixed inset-0 -z-10">
           <IkatField color="var(--color-paper)" opacity={0.028} scale={1.8} className="h-full w-full" />
+          <Dust count={26} seed={19} />
         </div>
+
+        <ScrollThread />
 
         <Bismillah />
         <Couple />

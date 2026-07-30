@@ -14,6 +14,7 @@ export function Reveal({
   as: Tag = "div",
   delay = 0,
   y = 18,
+  turn = 0,
   className = "",
   once = true,
 }: {
@@ -23,6 +24,15 @@ export function Reveal({
   delay?: number;
   /** Jarak geser awal dalam piksel. 0 untuk fade murni. */
   y?: number;
+  /**
+   * Derajat kemiringan awal pada sumbu X, berporos di tepi ATAS.
+   *
+   * Dipakai halaman paspor: kertas masuk dalam keadaan sedikit terangkat lalu
+   * merebah — yang terbaca sebagai lembar yang baru saja dibalik, bukan kotak
+   * yang memudar. Butuh `perspective` pada elemen induk; tanpa itu rotasinya
+   * ada tapi tidak terlihat sama sekali.
+   */
+  turn?: number;
   className?: string;
   once?: boolean;
 }) {
@@ -59,10 +69,15 @@ export function Reveal({
       className={className}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "none" : `translate3d(0, ${y}px, 0)`,
+        transform: visible
+          ? "none"
+          : `translate3d(0, ${y}px, 0)${turn ? ` rotateX(${turn}deg)` : ""}`,
+        transformOrigin: turn ? "50% 0%" : undefined,
         transition: reduced
           ? undefined
-          : `opacity 900ms cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 900ms cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
+          : `opacity 900ms cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform ${
+              turn ? 1150 : 900
+            }ms cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
         willChange: visible ? "auto" : "opacity, transform",
       }}
     >

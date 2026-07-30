@@ -233,6 +233,181 @@ html.lenis body {
   animation: rise-in 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Ritual pembuka & fisika paspor
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Garis lambang yang menggambar dirinya sendiri.
+   `--dash` diisi per-elemen dengan keliling bentuknya; kalau dibiarkan satu
+   angka untuk semua, lingkaran besar selesai duluan dan lingkaran kecil
+   tampak menunggu — yang terbaca sebagai patah, bukan sebagai satu tarikan. */
+@keyframes stroke-draw {
+  from {
+    stroke-dashoffset: var(--dash, 360);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Bentuk berisi (mata panah, titik benang) tidak punya garis untuk digambar —
+   ia muncul dengan mengembang dari pusat lambang, menyusul garisnya. */
+@keyframes seed-in {
+  from {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Sapuan cahaya yang melintasi permukaan sekali — dipakai saat lambang selesai
+   digambar, dan lagi saat sampul mendarat. */
+@keyframes sheen {
+  from {
+    transform: translateX(-120%) skewX(-14deg);
+  }
+  to {
+    transform: translateX(220%) skewX(-14deg);
+  }
+}
+
+/* Sampul naik ke tempatnya setelah ritual pembuka selesai. */
+@keyframes cover-settle {
+  from {
+    opacity: 0;
+    transform: translateY(3.5rem) scale(0.955);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Slip nama terselip masuk dari balik sampul — bergerak ke bawah lalu berhenti,
+   seperti kartu yang didorong sedikit keluar dari sela halaman. */
+@keyframes slip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-1.6rem) rotate(-1.2deg) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(-1.2deg) scale(1);
+  }
+}
+
+/* Slip ditarik keluar lebih dulu sebelum sampulnya dibuka. */
+@keyframes slip-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) rotate(-1.2deg);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(2.5rem) rotate(-3.5deg);
+  }
+}
+
+/* Denyut halus pada tombol buka — mengundang tanpa berteriak. */
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(176, 141, 79, 0.35);
+  }
+  60% {
+    box-shadow: 0 0 0 14px rgba(176, 141, 79, 0);
+  }
+}
+
+@utility animate-cover-settle {
+  animation: cover-settle 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@utility animate-slip-in {
+  animation: slip-in 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@utility animate-breathe {
+  animation: breathe 3.4s ease-out infinite;
+  animation-delay: 1.2s;
+}
+
+/* Punggung buku. Gradien tiga henti: bayangan di lipatan, tonjolan di tengah
+   punggung, bayangan lagi di tepi. Tanpa henti tengah yang lebih terang,
+   punggungnya cuma terbaca sebagai garis gelap — bukan sebagai ketebalan. */
+@utility book-spine {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.3) 22%,
+    rgba(216, 184, 120, 0.09) 46%,
+    rgba(0, 0, 0, 0.34) 74%,
+    rgba(0, 0, 0, 0.62) 100%
+  );
+}
+
+/* Blok halaman di sisi seberang punggung: tumpukan tepi kertas gading.
+   Dibuat dengan repeating-gradient, bukan elemen per-lembar — 40 div hanya
+   untuk tekstur 6 px adalah harga yang tidak perlu dibayar di ponsel. */
+@utility page-block {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(242, 237, 228, 0.5) 0px,
+    rgba(242, 237, 228, 0.5) 1px,
+    rgba(120, 110, 95, 0.35) 1px,
+    rgba(120, 110, 95, 0.35) 2px
+  );
+}
+
+/* Emboss: garis bingkai paspor yang tampak ditekan ke dalam kulit sampul,
+   bukan digambar di atasnya. Terang di bawah, gelap di atas. */
+@utility deboss {
+  box-shadow:
+    inset 0 1px 0 rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 rgba(216, 184, 120, 0.14);
+}
+
+/* Debu emas yang melayang di udara.
+   Dianimasikan murni lewat CSS, bukan canvas: 22 elemen yang hanya menggeser
+   transform & opacity dikomposit di luar main thread, sementara canvas
+   memaksa menggambar ulang tiap frame di thread yang sama dengan scroll. */
+@keyframes mote {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--mote-o, 0.5);
+  }
+  85% {
+    opacity: var(--mote-o, 0.5);
+  }
+  100% {
+    transform: translate3d(var(--mote-dx, 40px), var(--mote-dy, -70vh), 0);
+    opacity: 0;
+  }
+}
+
+@utility animate-mote {
+  animation: mote var(--mote-dur, 26s) linear infinite;
+  animation-delay: var(--mote-delay, 0s);
+  will-change: transform, opacity;
+}
+
+/* Benang emas penanda progres di tepi kanan. */
+@utility thread-rail {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(176, 141, 79, 0.22) 12%,
+    rgba(176, 141, 79, 0.22) 88%,
+    transparent 100%
+  );
+}
+
 /* ── Aksesibilitas ───────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,

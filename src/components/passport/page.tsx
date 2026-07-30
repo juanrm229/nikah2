@@ -40,8 +40,14 @@ export function PassportPage({
   }[stampPosition];
 
   return (
-    <section id={id} className="relative px-4 py-[clamp(3rem,10vh,6rem)]">
-      <Reveal className="mx-auto w-full max-w-md" y={26}>
+    // `perspective` di section, bukan di kertasnya: rotasi hanya terlihat
+    // kalau titik hilangnya dipasang pada LELUHUR yang bertransformasi.
+    <section
+      id={id}
+      className="relative px-4 py-[clamp(3rem,10vh,6rem)]"
+      style={{ perspective: "1600px" }}
+    >
+      <Reveal className="mx-auto w-full max-w-md" y={26} turn={7}>
         <div
           className={`grain relative overflow-hidden rounded-[2px] bg-paper text-ink shadow-[0_30px_60px_-25px_rgba(0,0,0,0.85)] ${className}`}
         >
