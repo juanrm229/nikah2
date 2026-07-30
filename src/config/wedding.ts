@@ -1,20 +1,24 @@
 /**
  * Satu-satunya sumber kebenaran untuk seluruh isi undangan.
  * Semua yang ditandai TODO wajib diganti sebelum undangan disebar.
+ *
+ * Data mempelai, tanggal, venue, koordinat, dan perjalanan cinta diambil dari
+ * undangan mer.id/arsa-aminah (30 Juli 2026). Yang masih TODO di bawah adalah
+ * hal yang TIDAK tercantum di sumber itu — jangan diisi dengan karangan.
  */
 
 export const wedding = {
   // ── Identitas ────────────────────────────────────────────────────────────
   couple: {
-    // TODO: ganti dengan nama asli
     bride: {
       name: "Aminah",
-      fullName: "Siti Aminah", // TODO
+      fullName: "Siti Aminah",
       nickname: "Aminah",
-      order: "Putri pertama dari", // TODO: "Putri kedua dari", dst.
-      father: "Bapak Fulan", // TODO
-      mother: "Ibu Fulanah", // TODO
-      instagram: "", // TODO, kosongkan kalau tidak ada
+      // Sumber hanya menulis "Putri dari", tanpa urutan anak.
+      order: "Putri dari",
+      father: "Bapak Ardani",
+      mother: "Ibu Rahmah",
+      instagram: "stminaminah",
       photo: "/photos/foto-4.jpg",
       // Titik yang dipertahankan saat foto dipangkas jadi pas foto.
       // Turunkan angka kedua kalau wajah terpotong di atas.
@@ -22,12 +26,12 @@ export const wedding = {
     },
     groom: {
       name: "Arsa",
-      fullName: "Arsa Pratama", // TODO
+      fullName: "Rahmad Januarsa",
       nickname: "Arsa",
-      order: "Putra pertama dari", // TODO
-      father: "Bapak Fulan", // TODO
-      mother: "Ibu Fulanah", // TODO
-      instagram: "", // TODO
+      order: "Putra dari",
+      father: "Bapak H. Armansyah",
+      mother: "Ibu Hj. Salasiah",
+      instagram: "rahmadjnrs",
       photo: "/photos/foto-2.jpg",
       photoFocus: "50% 14%",
     },
@@ -40,76 +44,80 @@ export const wedding = {
 
   // ── Acara ────────────────────────────────────────────────────────────────
   // WAJIB format ISO dengan offset waktu Indonesia. WIB=+07:00, WITA=+08:00, WIT=+09:00
+  // Balikpapan masuk WITA, jadi seluruh acara di bawah memakai +08:00.
   events: [
     {
       id: "akad",
       name: "Akad Nikah",
-      // TODO: tanggal & jam asli
-      start: "2026-12-20T08:00:00+07:00",
-      end: "2026-12-20T10:00:00+07:00",
-      venue: "Masjid Agung", // TODO
-      address: "Jl. Contoh No. 1, Kota, Provinsi", // TODO
-      mapsUrl: "https://maps.google.com/?q=-6.2088,106.8456", // TODO
-      coords: { lat: -6.2088, lng: 106.8456 }, // TODO — dipakai menghitung jarak tamu
+      // Tanggalnya sudah benar (hari yang sama dengan resepsi), tapi JAM dan
+      // VENUE-nya masih tebakan — tidak tercantum di undangan sumber.
+      // TODO: ganti jam & tempat akad yang sebenarnya.
+      // Catatan: MAIN_DATE di bawah memakai acara ini, jadi countdown ikut
+      // memakai jam 08:00 sampai TODO ini diisi.
+      start: "2026-11-15T08:00:00+08:00",
+      end: "2026-11-15T10:00:00+08:00",
+      venue: "Aula Kecamatan Balikpapan Selatan", // TODO: pastikan akad di tempat yang sama
+      address:
+        "Jl. Ruhui Rahayu 1 No. 1, Kelurahan Sepinggan, Kecamatan Balikpapan Selatan, Kota Balikpapan, Kalimantan Timur",
+      mapsUrl: "https://www.google.com/maps?q=-1.2436480177945766,116.89795911312105",
+      coords: { lat: -1.2436480177945766, lng: 116.89795911312105 },
     },
     {
       id: "resepsi",
-      name: "Resepsi",
-      start: "2026-12-20T11:00:00+07:00",
-      end: "2026-12-20T15:00:00+07:00",
-      venue: "Gedung Serbaguna", // TODO
-      address: "Jl. Contoh No. 1, Kota, Provinsi", // TODO
-      mapsUrl: "https://maps.google.com/?q=-6.2088,106.8456", // TODO
-      coords: { lat: -6.2088, lng: 106.8456 }, // TODO
+      name: "Resepsi Pernikahan",
+      start: "2026-11-15T10:00:00+08:00",
+      end: "2026-11-15T15:00:00+08:00",
+      venue: "Aula Kecamatan Balikpapan Selatan",
+      address:
+        "Jl. Ruhui Rahayu 1 No. 1, Kelurahan Sepinggan, Kecamatan Balikpapan Selatan, Kota Balikpapan, Kalimantan Timur",
+      mapsUrl: "https://www.google.com/maps?q=-1.2436480177945766,116.89795911312105",
+      coords: { lat: -1.2436480177945766, lng: 116.89795911312105 },
     },
   ],
 
   // Rundown untuk papan split-flap. Waktu lokal 24 jam, "HH:MM".
+  // TODO: susunan acara di dalam rentang 10.00–15.00 ini belum dikonfirmasi;
+  // hanya jam buka dan tutup resepsi yang berasal dari sumber.
   rundown: [
-    { time: "07:30", label: "Tamu memasuki area", sub: "GATE OPEN" },
-    { time: "08:00", label: "Akad nikah", sub: "CEREMONY" },
-    { time: "10:00", label: "Sesi foto keluarga", sub: "PHOTO" },
-    { time: "11:00", label: "Resepsi & santap siang", sub: "RECEPTION" },
-    { time: "13:00", label: "Hiburan", sub: "LIVE MUSIC" },
+    { time: "09:30", label: "Tamu memasuki area", sub: "GATE OPEN" },
+    { time: "10:00", label: "Resepsi dibuka", sub: "RECEPTION" },
+    { time: "11:00", label: "Santap siang", sub: "LUNCH" },
+    { time: "13:00", label: "Sesi foto bersama", sub: "PHOTO" },
     { time: "15:00", label: "Penutupan", sub: "CLOSING" },
   ],
 
   // ── Perjalanan cinta ─────────────────────────────────────────────────────
   // Ditampilkan sebagai rute penerbangan: tiap babak jadi satu persinggahan,
-  // lengkap dengan kode tiga huruf ala bandara. Ganti kodenya dengan singkatan
-  // yang berarti buat kalian — nama kota, nama tempat, apa saja.
+  // lengkap dengan kode tiga huruf ala bandara.
+  // BPN memang kode bandara Sepinggan Balikpapan — persinggahan terakhirnya nyata.
   story: [
     {
-      code: "TMU", // TODO
-      date: "2019", // TODO
-      title: "Pertama Bertemu",
-      text: "Tanpa tahu bahwa hari itu adalah awal dari segalanya.",
+      code: "RPL",
+      date: "22 Maret 2026",
+      title: "Berawal dari Reply Story",
+      text: "Satu balasan story berubah jadi percakapan panjang, lalu berujung pertemuan.",
     },
     {
-      code: "DKT",
-      date: "2021",
-      title: "Mulai Dekat",
-      text: "Obrolan yang makin panjang, dan pulang yang makin enggan.",
+      code: "SRS",
+      date: "10 Juli 2026",
+      title: "Memutuskan Serius",
+      text: "Dari perkenalan yang singkat dan pertemuan yang terbatas, kami memilih melangkah lebih serius.",
     },
     {
-      code: "LMR",
-      date: "2025",
-      title: "Lamaran",
-      text: "Dua keluarga bertemu, dan niat baik itu diucapkan.",
-    },
-    {
-      code: "AKD",
-      date: "2026",
-      title: "Akad Nikah",
-      text: "Perjalanan ini akhirnya sampai di tujuannya.",
+      code: "BPN",
+      date: "15 November 2026",
+      title: "Hari Bahagia",
+      text: "Dengan doa keluarga dan restu orang-orang tercinta, perjalanan ini bermuara pada satu tujuan.",
     },
   ],
 
   // ── Nuansa ───────────────────────────────────────────────────────────────
-  // Dari mana motif tenunnya. TODO: sesuaikan biar tidak salah klaim daerah.
+  // Sengaja tanpa nama daerah: motifnya diturunkan dari kain yang dipakai
+  // mempelai wanita di foto prewedding, dan asal kainnya belum dipastikan.
+  // Jangan mengklaim daerah tertentu tanpa konfirmasi.
   tenun: {
-    origin: "Tenun Ikat", // TODO cth: "Tenun Ikat Sikka", "Tenun Sasak"
-    note: "Motif pada undangan ini diambil dari kain yang kami kenakan.",
+    origin: "Tenun Ikat",
+    note: "Motif pada undangan ini digambar ulang dari kain yang dikenakan mempelai wanita.",
   },
 
   dressCode: {
@@ -126,19 +134,19 @@ export const wedding = {
   },
 
   // ── Amplop digital ───────────────────────────────────────────────────────
+  // Dimatikan sampai data rekening yang SEBENARNYA tersedia. Nomor contoh
+  // sengaja tidak ditinggalkan di sini supaya tidak ada rekening karangan yang
+  // ikut ter-commit dan tidak ada tamu yang salah transfer.
+  // TODO: isi bank, nomor, dan nama pemilik rekening, lalu set enabled: true.
   gift: {
-    enabled: true,
-    banks: [
-      // TODO: isi rekening asli
-      { bank: "BCA", number: "1234567890", holder: "Nama Pemilik Rekening" },
-      { bank: "Mandiri", number: "0987654321", holder: "Nama Pemilik Rekening" },
-    ],
+    enabled: false,
+    banks: [] as { bank: string; number: string; holder: string }[],
     qris: "", // TODO: path gambar QRIS di /public, cth "/qris.png"
     address: {
       // Kirim kado fisik
       label: "Kirim hadiah",
-      value: "Jl. Contoh No. 1, Kota, Provinsi, 12345", // TODO
-      recipient: "Nama Penerima", // TODO
+      value: "", // TODO
+      recipient: "", // TODO
     },
   },
 
