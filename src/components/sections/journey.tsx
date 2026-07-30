@@ -66,10 +66,17 @@ export function Journey() {
       const raw = (vh - rect.top) / (vh + rect.height);
       const progress = Math.max(0, Math.min(1, raw));
 
-      const point = pathEl.getPointAtLength(progress * total);
-      // Ambil titik sedikit di depan untuk menentukan arah hidung pesawat.
-      const ahead = pathEl.getPointAtLength(Math.min(total, progress * total + 6));
-      const angle = (Math.atan2(ahead.y - point.y, ahead.x - point.x) * 180) / Math.PI;
+      const at = progress * total;
+      const point = pathEl.getPointAtLength(at);
+
+      // Arah hidung pesawat diukur dari sepotong jalur sepanjang SPAN. Pangkalnya
+      // ditarik mundur saat sudah dekat ujung, supaya potongannya selalu punya
+      // panjang: kalau pangkal dan ujungnya bertemu di titik yang sama,
+      // atan2(0, 0) mengembalikan 0 dan pesawatnya mendadak melintang.
+      const SPAN = 6;
+      const from = pathEl.getPointAtLength(Math.max(0, Math.min(at, total - SPAN)));
+      const to = pathEl.getPointAtLength(Math.min(total, Math.max(at, 0) + SPAN));
+      const angle = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
 
       plane.setAttribute("transform", `translate(${point.x} ${point.y}) rotate(${angle + 90})`);
 
