@@ -29,6 +29,22 @@ import { HONEYPOT } from "@/lib/validate";
 const MAX_BYTES = 8 * 1024 * 1024;
 const ACCEPT = "image/jpeg,image/png,image/webp";
 
+/** Tanda sudut jendela bidik pada kotak pilih foto. */
+function Bracket({ className }: { className: string }) {
+  return (
+    <svg
+      aria-hidden
+      className={`pointer-events-none absolute ${className}`}
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+    >
+      <path d="M0 4 V0 H4" stroke="var(--color-paper)" strokeOpacity="0.35" strokeWidth="1" />
+    </svg>
+  );
+}
+
 type State =
   | { status: "idle" }
   | { status: "busy"; step: string }
@@ -151,16 +167,37 @@ export function PhotoWall({
               <input id="photo-hp" name={HONEYPOT} type="text" tabIndex={-1} autoComplete="off" />
             </div>
 
-            {/* Kotak pilih foto — bingkai film, isinya pratinjau begitu dipilih */}
+            {/* Kotak pilih foto — jendela bidik, isinya pratinjau begitu dipilih.
+                Rasionya hanya 4∶3 SETELAH ada foto. Selama masih kosong, kotak
+                setinggi itu adalah lubang gelap sekitar 250 px yang tidak
+                memuat apa-apa selain dua kata — bagian paling hampa di seluruh
+                undangan, dan ia jatuh persis di halaman yang paling ingin
+                mengundang tamu ikut mengisi. Kosongnya sekarang setinggi
+                keperluannya saja, dengan tanda sudut jendela bidik supaya ia
+                tetap terbaca sebagai alat, bukan sebagai kotak yang lupa
+                diisi. */}
             <label
               htmlFor="photo-file"
-              className="flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-[3px] border border-dashed border-paper/30 bg-paper/[0.03] transition-colors hover:border-gold"
+              className={`relative flex cursor-pointer items-center justify-center overflow-hidden rounded-[3px] border border-dashed border-paper/30 bg-paper/[0.03] transition-colors hover:border-gold ${
+                preview ? "aspect-[4/3]" : "h-28"
+              }`}
             >
               {preview ? (
                 // eslint-disable-next-line @next/next/no-img-element -- objek URL lokal, bukan aset yang bisa dioptimalkan
                 <img src={preview} alt="Pratinjau foto pilihanmu" className="h-full w-full object-cover" />
               ) : (
-                <span className="field-label text-paper-dim/70">Pilih foto</span>
+                <>
+                  <Bracket className="left-2 top-2" />
+                  <Bracket className="right-2 top-2 rotate-90" />
+                  <Bracket className="bottom-2 left-2 -rotate-90" />
+                  <Bracket className="bottom-2 right-2 rotate-180" />
+                  <span className="text-center">
+                    <span className="field-label block text-paper-dim/80">Pilih foto</span>
+                    <span className="mt-1.5 block font-mono text-[0.58rem] tracking-[0.14em] text-paper-dim/45">
+                      JPG · PNG · WEBP · MAKS 8 MB
+                    </span>
+                  </span>
+                </>
               )}
             </label>
             <input
