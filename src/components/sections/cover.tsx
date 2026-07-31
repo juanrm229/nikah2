@@ -189,14 +189,22 @@ export function Cover({
         "--ovd-b",
         (1 + Math.max(0, 1 - Math.abs(current.ry) / 7) * 0.22).toFixed(3),
       );
-      // Kinegram: tambalan laminasi difraksi. Ia tidak memudar masuk-keluar
-      // mengikuti kemiringan secara lurus — ia menyala hanya pada SATU PITA
-      // sudut yang sempit di sekitar 6°, lalu padam lagi di kedua sisinya.
-      // Itulah yang membedakannya dari kilau biasa: hologram sungguhan punya
-      // sudut pandang yang benar, dan tamu yang memiringkan ponselnya
-      // menemukan sudut itu sendiri.
+      // Kinegram: laminasi difraksi di atas muka sampul. Ia tidak memudar
+      // masuk-keluar mengikuti kemiringan secara lurus — ia menyala hanya pada
+      // SATU PITA sudut yang sempit, lalu padam lagi di kedua sisinya. Itulah
+      // yang membedakannya dari kilau biasa: hologram sungguhan punya sudut
+      // pandang yang benar, dan tamu yang memiringkan ponselnya menemukan sudut
+      // itu sendiri.
+      //
+      // Puncaknya di 11°, dan angka itu dipilih terhadap ayunan diam di atas:
+      // saat tak ada yang menyentuhnya, `ry` hanya mengembara sampai 5°. Dengan
+      // puncak di 6° seperti sebelumnya, ayunan diam itu SELALU berada dekat
+      // puncaknya — pelangi yang seharusnya sesekali tertangkap justru menyala
+      // terus-menerus dan berubah jadi pita yang ditempel. Di 11° hanya
+      // kemiringan sungguhan yang mencapainya: gyro atau kursor yang digeser
+      // ke tepi kartu.
       const tilt = Math.abs(current.ry);
-      card.style.setProperty("--kine", Math.max(0, 1 - Math.abs(tilt - 6) / 4.2).toFixed(3));
+      card.style.setProperty("--kine", Math.max(0, 1 - Math.abs(tilt - 11) / 4.5).toFixed(3));
       card.style.setProperty("--kine-x", `${(50 - current.ry * 7).toFixed(1)}%`);
       raf = requestAnimationFrame(apply);
     };
@@ -436,16 +444,19 @@ export function Cover({
                         }}
                       />
 
-                      {/* Tambalan kinegram, membentang miring melintasi muka
-                          sampul. Ditaruh SEBELUM bingkai dan isinya di urutan
-                          DOM tapi tetap terlihat di atasnya karena
-                          `color-dodge` hanya menaikkan piksel yang sudah
-                          terang — yang dinaikkannya justru garis emas dan
-                          cetakan foil, bukan kulit navy di sekitarnya. */}
+                      {/* Laminasi kinegram, menutupi SELURUH muka sampul —
+                          bukan sepotong pita di tengahnya. Laminasi paspor
+                          sungguhan memang menyelimuti seluruh halaman data;
+                          yang berpindah-pindah cuma sapuan cahayanya. Versi
+                          berbentuk pita punya dua tepi lurus yang memotong
+                          lambang, dan apa pun yang punya batas sejelas itu
+                          terbaca sebagai stiker yang ditempel.
+
+                          Diagonalnya sekarang datang dari arah gradiennya
+                          sendiri, jadi tidak ada lagi elemen yang diputar. */}
                       <div
                         aria-hidden
-                        className="kinegram pointer-events-none absolute inset-x-2 top-[26%] h-[96px]"
-                        style={{ transform: "rotate(-6deg)" }}
+                        className="kinegram pointer-events-none absolute inset-0"
                       />
 
                       {/* Punggung buku di tepi kiri — engsel tempat sampul berputar */}

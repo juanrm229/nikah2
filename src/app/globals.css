@@ -738,25 +738,40 @@ html.uv .uv-ink {
    pelanginya menempel di garis emas dan permukaan yang memantul, dan lewat
    begitu saja di atas kulit navy yang gelap. Persis seperti benda aslinya. */
 @utility kinegram {
-  opacity: calc(var(--kine, 0) * 0.9);
+  opacity: calc(var(--kine, 0) * 0.5);
   mix-blend-mode: color-dodge;
-  background:
-    repeating-linear-gradient(
-      104deg,
-      rgba(255, 90, 140, 0.5) 0px,
-      rgba(255, 210, 90, 0.5) 7px,
-      rgba(120, 255, 190, 0.5) 14px,
-      rgba(120, 190, 255, 0.5) 21px,
-      rgba(200, 120, 255, 0.5) 28px,
-      rgba(255, 90, 140, 0.5) 35px
-    );
+  /* Alfanya SANGAT rendah, dan itu yang menentukan segalanya. `color-dodge`
+     membagi bidang bawahnya dengan kebalikan bidang atas — ia meledak jadi
+     warna pekat jauh sebelum alfanya terasa "cukup". Pada 0,5 yang terlihat
+     bukan cahaya yang tertangkap, melainkan pita pelangi yang ditempel di atas
+     sampul. Pada 0,09 ia lewat nyaris tanpa jejak di kulit navy dan hanya
+     menyalakan apa yang memang sudah terang: garis emas dan cetakan foil. */
+  background: repeating-linear-gradient(
+    104deg,
+    rgba(255, 90, 140, 0.09) 0px,
+    rgba(255, 210, 90, 0.09) 7px,
+    rgba(120, 255, 190, 0.09) 14px,
+    rgba(120, 190, 255, 0.09) 21px,
+    rgba(200, 120, 255, 0.09) 28px,
+    rgba(255, 90, 140, 0.09) 35px
+  );
   background-size: 280% 100%;
   background-position: var(--kine-x, 50%) 0;
-  /* Garis difraksi yang rapat, lalu tepi yang dilembutkan supaya tambalannya
-     tidak berujung sebagai persegi panjang yang jelas batasnya. */
+  /* Dua masker yang diiris bersama: garis difraksi yang rapat, lalu SATU
+     SAPUAN diagonal yang menyeberangi kartu mengikuti kemiringan. Sapuan itu
+     yang menghapus tepi lurus — tanpanya, laminasinya berujung sebagai persegi
+     panjang yang batasnya terbaca jelas, dan benda yang punya batas terbaca
+     sebagai stiker. */
   mask-image:
-    repeating-linear-gradient(76deg, black 0 2.5px, transparent 2.5px 6.5px),
-    radial-gradient(120% 130% at 50% 50%, black 42%, transparent 82%);
+    repeating-linear-gradient(76deg, black 0 2px, transparent 2px 7px),
+    linear-gradient(104deg, transparent 10%, black 40%, black 60%, transparent 90%);
+  mask-size:
+    auto,
+    260% 100%;
+  mask-position:
+    0 0,
+    var(--kine-x, 50%) 0;
+  mask-repeat: repeat, no-repeat;
   mask-composite: intersect;
 }
 
