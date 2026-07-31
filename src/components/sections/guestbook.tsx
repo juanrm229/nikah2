@@ -176,7 +176,19 @@ export function Guestbook({
   );
 }
 
-/** Satu label bagasi: lubang tali di kiri atas, kartu gading, teks ucapan. */
+/**
+ * Posisi lubang tali, dalam persen lebar kartu. Dipakai bertiga sekaligus —
+ * lubangnya, talinya, dan poros ayunannya — dan ketiganya HARUS satu angka:
+ * tali yang masuk ke sisi lain lubang, atau kartu yang berayun dari titik yang
+ * bukan tempatnya digantung, langsung membatalkan seluruh ilusinya.
+ */
+const HOLE_X = "22%";
+/** Jarak pusat lubang dari tepi atas kartu, dalam piksel. */
+const HOLE_Y = 11;
+/** Tinggi tali yang terlihat di atas kartu, dalam piksel. */
+const CORD_H = 17;
+
+/** Satu label bagasi: tali & lubang di kiri atas, kartu gading, teks ucapan. */
 function LuggageTag({ wish, index }: { wish: PublicWish; index: number }) {
   // Angka tetap yang diturunkan dari indeks, bukan acak — hasil render server
   // dan klien harus sama, dan tag tidak boleh berpindah tiap kali daftar
@@ -186,7 +198,46 @@ function LuggageTag({ wish, index }: { wish: PublicWish; index: number }) {
   const delay = [0, 0.7, 1.4, 0.35, 1.05, 1.75][index % 6];
 
   return (
-    <li className="mb-3 break-inside-avoid">
+    <li className="relative mb-3 break-inside-avoid" style={{ paddingTop: CORD_H }}>
+      {/* Tali gantungannya.
+          Kartunya sudah lama punya lubang tali, tapi tidak pernah punya
+          talinya — dan lubang yang tidak dilewati apa pun tidak terbaca
+          sebagai label bagasi, melainkan sebagai stiker yang kebetulan
+          berbintik hitam di pojok.
+
+          Talinya sengaja DI LUAR elemen yang berayun. Yang bergoyang adalah
+          kartu yang tergantung, bukan tali yang menggantungnya; kalau
+          keduanya ikut berputar, yang terlihat adalah satu benda kaku yang
+          dimiringkan bolak-balik. */}
+      <span
+        aria-hidden
+        className="absolute top-0 z-10 -translate-x-1/2"
+        style={{ left: HOLE_X }}
+      >
+        {/* Talinya digambar lebih panjang daripada celah di atas kartu, dan
+            berhenti tepat di TEPI lubang — bukan di tepi kartu. Yang berhenti
+            di tepi kartu terbaca sebagai tali yang putus sebelum sampai, dan
+            lubang di bawahnya kembali jadi bintik yang berdiri sendiri.
+            Karena kotaknya `absolute`, tinggi berlebih ini tidak menambah
+            tinggi baris — yang mengatur celah tetap `paddingTop` di <li>. */}
+        <svg width="14" height={CORD_H + HOLE_Y} viewBox="0 0 14 28" fill="none">
+          <circle
+            cx="7"
+            cy="5"
+            r="4"
+            stroke="var(--color-paper)"
+            strokeOpacity="0.32"
+            strokeWidth="1.1"
+          />
+          <path
+            d="M7 9 V23"
+            stroke="var(--color-paper)"
+            strokeOpacity="0.32"
+            strokeWidth="1.1"
+          />
+        </svg>
+      </span>
+
       <div
         className="animate-sway grain relative rounded-[3px] bg-paper-2 px-3.5 pt-5 pb-3 text-ink shadow-[0_14px_26px_-14px_rgba(0,0,0,0.75)]"
         style={
@@ -195,6 +246,7 @@ function LuggageTag({ wish, index }: { wish: PublicWish; index: number }) {
             "--sway-b": `${tilt + 1.1}deg`,
             "--sway-dur": `${dur}s`,
             "--sway-delay": `${delay}s`,
+            "--sway-origin": `${HOLE_X} ${HOLE_Y}px`,
           } as React.CSSProperties
         }
       >
@@ -203,7 +255,8 @@ function LuggageTag({ wish, index }: { wish: PublicWish; index: number }) {
         {/* Lubang tali, benar-benar dilubangi ke latar gelap di belakangnya */}
         <span
           aria-hidden
-          className="absolute left-[22%] top-2 h-2.5 w-2.5 -translate-x-1/2 rounded-full border border-ink/25 bg-ink"
+          className="absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-ink/25 bg-ink"
+          style={{ left: HOLE_X, top: HOLE_Y }}
         />
 
         <p className="text-[0.8rem] leading-snug font-light break-words text-ink-2">
