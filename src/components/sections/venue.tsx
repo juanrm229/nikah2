@@ -16,8 +16,36 @@ import {
   zoneLabel,
 } from "@/lib/datetime";
 
-/** Lokasi & waktu acara, disajikan sebagai dua lembar tiket. */
+/**
+ * Acara yang berbagi tempat, dikelompokkan jadi satu tiket.
+ *
+ * Akad dan resepsi di undangan ini digelar di aula yang sama, dan dulu tiap
+ * acara dapat tiketnya sendiri — hasilnya nama gedung dan alamat lengkap yang
+ * SAMA PERSIS dicetak dua kali berturut-turut, memakan dua layar penuh di
+ * ponsel untuk menyampaikan satu keterangan. Yang terbaca bukan "dua acara",
+ * melainkan halaman yang lupa dirapikan.
+ *
+ * Pengelompokan dilakukan pada acara yang BERURUTAN saja, bukan pada seluruh
+ * daftar. Kalau suatu saat urutannya jadi aula → masjid → aula, dua kunjungan
+ * ke aula itu memang dua persinggahan terpisah dan harus tetap tampil sebagai
+ * dua tiket — menyatukannya akan berbohong tentang urutan hari itu.
+ */
+function groupByVenue(events: readonly WeddingEvent[]) {
+  const groups: WeddingEvent[][] = [];
+  for (const event of events) {
+    const last = groups.at(-1);
+    const sameSpot =
+      last && last[0].venue === event.venue && last[0].address === event.address;
+    if (sameSpot) last.push(event);
+    else groups.push([event]);
+  }
+  return groups;
+}
+
+/** Lokasi & waktu acara, disajikan sebagai tiket per tempat. */
 export function Venue() {
+  const groups = groupByVenue(wedding.events);
+
   return (
     <PassportPage
       uvSeed={17}
@@ -38,8 +66,8 @@ export function Venue() {
       <Heading label="Waktu & Tempat" title="Rincian Perjalanan" />
 
       <div className="mt-9 space-y-6">
-        {wedding.events.map((event, i) => (
-          <EventTicket key={event.id} event={event} delay={i * 120} />
+        {groups.map((group, i) => (
+          <EventTicket key={group[0].id} group={group} delay={i * 120} />
         ))}
       </div>
 
@@ -48,17 +76,26 @@ export function Venue() {
   );
 }
 
-function EventTicket({ event, delay }: { event: WeddingEvent; delay: number }) {
-  const zone = zoneLabel(event.start);
+/**
+ * Satu tempat, satu tiket — dengan tiap acara di dalamnya sebagai satu ruas
+ * perjalanan, persis cara tiket penerbangan menuliskan penerbangan sambungan.
+ */
+function EventTicket({ group, delay }: { group: WeddingEvent[]; delay: number }) {
+  const spot = group[0];
+
+  // Bonggol tiket hanya setinggi kartunya, dan nama acara lengkap ("Resepsi
+  // Pernikahan") yang dirangkai dua kali sudah melewati tinggi itu di ponsel.
+  // Kata pertamanya cukup: "Akad · Resepsi" terbaca tanpa perlu dipotong.
+  const stubLabel = group.map((e) => e.name.split(" ")[0]).join(" · ");
 
   const saveToCalendar = () => {
-    const blob = new Blob([buildIcs(event, wedding.title)], {
+    const blob = new Blob([buildIcs(group, wedding.title)], {
       type: "text/calendar;charset=utf-8",
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${event.id}-${wedding.couple.groom.name}-${wedding.couple.bride.name}.ics`;
+    a.download = `${spot.id}-${wedding.couple.groom.name}-${wedding.couple.bride.name}.ics`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -69,34 +106,28 @@ function EventTicket({ event, delay }: { event: WeddingEvent; delay: number }) {
         {/* Sobekan kiri, dicetak vertikal seperti bonggol tiket */}
         <div className="flex w-9 shrink-0 items-center justify-center border-r border-dashed border-ink/25 bg-ink/[0.05]">
           <span className="field-label rotate-180 text-ink-soft [writing-mode:vertical-rl]">
-            {event.name}
+            {stubLabel}
           </span>
         </div>
 
         <div className="min-w-0 flex-1 p-4">
-          <p className="display text-[1.3rem] text-ink">{event.venue}</p>
+          <p className="display text-[1.3rem] text-ink">{spot.venue}</p>
           <p className="mt-1 text-[0.78rem] leading-snug font-light text-ink-soft">
-            {event.address}
+            {spot.address}
           </p>
 
-          <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-ink/15 pt-3">
-            <div>
-              <dt className="field-label text-ink-soft/75">Tanggal</dt>
-              <dd className="mt-0.5 text-[0.78rem] font-light text-ink-2">
-                {formatDateLong(event.start)}
-              </dd>
-            </div>
-            <div>
-              <dt className="field-label text-ink-soft/75">Pukul</dt>
-              <dd className="mt-0.5 font-mono text-[0.82rem] text-ink-2">
-                {formatTime(event.start)} – {formatTime(event.end)} {zone}
-              </dd>
-            </div>
-          </dl>
+          <div className="mt-4 border-t border-ink/15 pt-3">
+            <p className="field-label text-ink-soft/75">Tanggal</p>
+            <p className="mt-0.5 text-[0.82rem] font-light text-ink-2">
+              {formatDateLong(spot.start)}
+            </p>
+          </div>
+
+          <Itinerary events={group} />
 
           <div className="mt-4 flex flex-wrap gap-2">
             <a
-              href={event.mapsUrl}
+              href={spot.mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-full border border-ink/30 px-4 py-2 transition-colors hover:bg-ink hover:text-paper"
@@ -114,6 +145,44 @@ function EventTicket({ event, delay }: { event: WeddingEvent; delay: number }) {
         </div>
       </div>
     </Reveal>
+  );
+}
+
+/**
+ * Ruas-ruas acara di satu tempat, dirangkai satu garis tegak dengan simpul di
+ * tiap acara — bahasa yang sama dengan rute perjalanan di <Journey>, supaya
+ * "dua acara di satu gedung" terbaca sebagai satu hari yang berlanjut, bukan
+ * sebagai dua kartu yang kebetulan bertumpuk.
+ */
+function Itinerary({ events }: { events: WeddingEvent[] }) {
+  return (
+    <ol className="mt-3 space-y-3">
+      {events.map((event, i) => {
+        const last = i === events.length - 1;
+        return (
+          <li key={event.id} className="relative flex gap-3 pl-1">
+            {/* Simpul + garis penyambung ke ruas berikutnya. Garisnya
+                digambar dari simpul ini ke bawah, jadi ruas terakhir tidak
+                menjulurkan ekor yang tidak menuju ke mana-mana. */}
+            <span aria-hidden className="relative mt-[0.3rem] flex w-2 shrink-0 justify-center">
+              <span className="h-2 w-2 rounded-full border border-gold-3/70 bg-paper" />
+              {!last && (
+                <span className="absolute top-2.5 h-[calc(100%+0.75rem)] w-px bg-ink/20" />
+              )}
+            </span>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[0.86rem] leading-tight font-light text-ink">
+                {event.name}
+              </p>
+              <p className="mt-0.5 font-mono text-[0.8rem] text-ink-soft">
+                {formatTime(event.start)}–{formatTime(event.end)} {zoneLabel(event.start)}
+              </p>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 

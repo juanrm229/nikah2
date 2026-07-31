@@ -217,26 +217,38 @@ export function compassLabel(deg: number) {
 /**
  * Berkas kalender untuk tombol "Simpan ke kalender".
  * Dibuat di sisi klien sebagai blob, tanpa perlu memanggil server.
+ *
+ * Menerima BEBERAPA acara sekaligus, dan itu bukan kelonggaran yang dibiarkan
+ * menganggur: akad dan resepsi di tempat yang sama tampil sebagai satu tiket,
+ * jadi satu tombol di tiket itu harus memasukkan keduanya. Satu VCALENDAR yang
+ * memuat dua VEVENT persis untuk ini — tamu menekan sekali, kalendernya
+ * bertambah dua baris.
  */
-export function buildIcs(event: WeddingEvent, title: string) {
+export function buildIcs(events: WeddingEvent | readonly WeddingEvent[], title: string) {
+  const list = Array.isArray(events) ? events : [events as WeddingEvent];
+
   const stamp = (iso: string) =>
     new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 
   // Baris ICS wajib dipisah CRLF, dan teks bebas harus meloloskan koma & titik koma.
   const esc = (s: string) => s.replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
 
+  const now = stamp(new Date().toISOString());
+
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//undangan//ID",
-    "BEGIN:VEVENT",
-    `UID:${event.id}-${stamp(event.start)}@undangan`,
-    `DTSTAMP:${stamp(new Date().toISOString())}`,
-    `DTSTART:${stamp(event.start)}`,
-    `DTEND:${stamp(event.end)}`,
-    `SUMMARY:${esc(`${event.name} — ${title}`)}`,
-    `LOCATION:${esc(`${event.venue}, ${event.address}`)}`,
-    "END:VEVENT",
+    ...list.flatMap((event) => [
+      "BEGIN:VEVENT",
+      `UID:${event.id}-${stamp(event.start)}@undangan`,
+      `DTSTAMP:${now}`,
+      `DTSTART:${stamp(event.start)}`,
+      `DTEND:${stamp(event.end)}`,
+      `SUMMARY:${esc(`${event.name} — ${title}`)}`,
+      `LOCATION:${esc(`${event.venue}, ${event.address}`)}`,
+      "END:VEVENT",
+    ]),
     "END:VCALENDAR",
   ].join("\r\n");
 }
