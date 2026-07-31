@@ -101,9 +101,13 @@ export function Closing() {
           </div>
 
           {/* Zona MRZ, penutup yang sama dengan kaki sampul */}
-          <div className="relative border-t border-gold/20 bg-black/30 px-4 py-2.5">
+          <div className="mrz-zone relative border-t border-gold/20 bg-black/30 px-4 py-2.5">
             {mrz.map((line, i) => (
-              <p key={i} className="mrz text-[0.47rem] leading-[1.7] whitespace-pre text-gold/45">
+              <p
+                key={i}
+                className="mrz mrz-fit leading-[1.7] whitespace-pre text-gold/45"
+                style={{ "--mrz-cap": "0.47rem" } as React.CSSProperties}
+              >
                 {line}
               </p>
             ))}

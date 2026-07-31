@@ -96,7 +96,12 @@ export function Rsvp({
 
           <fieldset>
             <legend className="field-label text-ink-soft/75">Keterangan</legend>
-            <div className="mt-2.5 grid grid-cols-3 gap-2">
+            {/* Tiga kolom baru muat mulai 360 px. Di bawah itu tiap kolom
+                tinggal ~57 px sementara "BERHALANGAN" butuh 81 px, dan huruf
+                terakhirnya hilang di balik tepi kartu. Ditumpuk jadi tiga baris
+                penuh, teksnya utuh DAN sasaran sentuhnya jadi selebar kartu —
+                dua-duanya menang di ponsel terkecil. */}
+            <div className="mt-2.5 grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
               {CHOICES.map((c) => {
                 const selected = attending === c.value;
                 return (

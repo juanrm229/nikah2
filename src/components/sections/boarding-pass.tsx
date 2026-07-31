@@ -95,11 +95,11 @@ export function BoardingPass({
           </div>
         </div>
 
-        <div className="border-t border-ink/15 px-3 py-2">
+        <div className="mrz-zone border-t border-ink/15 px-3 py-2">
           {mrz.map((line, i) => (
             <p
               key={i}
-              className="mrz text-[0.42rem] leading-[1.8] whitespace-pre text-ink-soft/65"
+              className="mrz mrz-fit leading-[1.8] whitespace-pre text-ink-soft/65"
             >
               {line}
             </p>

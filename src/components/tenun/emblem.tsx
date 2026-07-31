@@ -33,10 +33,16 @@ export function TenunEmblem({
   color = "currentColor",
   draw = false,
   drawDelay = 0,
+  style,
 }: {
   className?: string;
   size?: number;
   color?: string;
+  /**
+   * Diteruskan ke <svg>. Dipakai sampul untuk memasang filter tinta
+   * optically-variable yang digerakkan kemiringan perangkat.
+   */
+  style?: React.CSSProperties;
   /**
    * Gambar lambangnya garis demi garis alih-alih menampilkannya utuh.
    * Dipakai di ritual pembuka; di tempat lain lambang harus langsung ada.
@@ -71,6 +77,7 @@ export function TenunEmblem({
     <svg
       aria-hidden
       className={className}
+      style={style}
       width={size}
       height={size}
       viewBox="0 0 120 120"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Cover } from "@/components/sections/cover";
 import { Bismillah } from "@/components/sections/bismillah";
 import { Couple } from "@/components/sections/couple";
@@ -52,6 +52,30 @@ export function Invitation({
 }) {
   const [opened, setOpened] = useState(false);
 
+  /**
+   * Segel gulir selama sampul masih tertutup.
+   *
+   * Sampul adalah lapisan `fixed`, jadi ia sendiri tidak pernah bergerak — tapi
+   * `<main>` di belakangnya tetap dokumen setinggi sebelas ribu piksel. Tamu
+   * yang menggeser layar sambil menunggu ritual pembuka diam-diam menggulir
+   * undangan di baliknya, dan begitu sampulnya dibuka yang muncul bukan
+   * halaman pertama melainkan bagian tengah yang kebetulan sedang di layar.
+   *
+   * Pembersihannya (saat `opened` menjadi true) sekaligus MEMULANGKAN posisi
+   * gulir ke nol. Segelnya hanya menahan; yang benar-benar menjamin undangan
+   * dimulai dari halaman pertama adalah baris itu.
+   */
+  useEffect(() => {
+    if (opened) return;
+    const root = document.documentElement;
+    window.scrollTo(0, 0);
+    root.classList.add("sealed");
+    return () => {
+      root.classList.remove("sealed");
+      window.scrollTo(0, 0);
+    };
+  }, [opened]);
+
   return (
     <>
       <ScrollProvider enabled={opened} />
@@ -73,6 +97,23 @@ export function Invitation({
           <IkatField color="var(--color-paper)" opacity={0.028} scale={1.8} className="h-full w-full" />
           <Dust count={26} seed={19} />
         </div>
+
+        {/* Vignette tipis DI ATAS segalanya.
+            Section gelap sebelumnya rata betul: motif tenun tersebar merata
+            sampai ke tepi layar, jadi tidak ada tempat yang lebih terang dari
+            tempat lain dan mata tidak punya alasan untuk memusat. Sudut yang
+            digelapkan sedikit membuat seluruh undangan terbaca seolah DIPOTRET
+            di bawah satu lampu — halaman kertasnya ikut, bukan cuma latarnya.
+            Kekuatannya sengaja nyaris tak terukur; begitu ia terlihat sebagai
+            "efek", ia sudah salah. */}
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 z-20"
+          style={{
+            background:
+              "radial-gradient(125% 85% at 50% 42%, transparent 42%, rgba(6,5,4,0.30) 78%, rgba(6,5,4,0.55) 100%)",
+          }}
+        />
 
         <ScrollThread />
 

@@ -5,6 +5,7 @@ import { Stamp } from "@/components/passport/stamp";
 import { Reveal } from "@/components/motion/reveal";
 import { IkatField } from "@/components/tenun/ikat";
 import { personMrz } from "@/lib/wedding-mrz";
+import { withSoftBreaks } from "@/lib/text";
 
 type Person = typeof wedding.couple.groom | typeof wedding.couple.bride;
 
@@ -70,13 +71,21 @@ function DataPage({
       </div>
 
       <div className="relative flex gap-4 p-4">
-        {/* Foto utama */}
-        <div className="relative h-[132px] w-[100px] shrink-0 overflow-hidden border border-ink/25 bg-ink/5">
+        {/* Foto utama. Lebarnya ikut lebar layar: pada 320 px foto tetap 100 px
+            berarti kolom data tinggal ~170 px, dan setiap nama di sebelahnya
+            terpaksa patah tiga baris.
+
+            Tingginya sengaja MENGIKUTI kolom data (`self-stretch`), bukan angka
+            tetap. Begitu nama turun ke baris kedua di layar sempit, kolom kanan
+            memanjang — dan pas foto 132 px di sebelahnya akan terlihat seperti
+            perangko yang tertinggal di sudut. Fotonya `object-cover`, jadi
+            kotak setinggi apa pun tetap terisi rapi. */}
+        <div className="relative w-[clamp(92px,29vw,116px)] shrink-0 self-stretch overflow-hidden border border-ink/25 bg-ink/5">
           <Image
             src={person.photo}
             alt={`Foto ${person.fullName}`}
             fill
-            sizes="100px"
+            sizes="116px"
             style={{ objectPosition: person.photoFocus }}
             className="object-cover grayscale contrast-[1.05]"
           />
@@ -104,11 +113,11 @@ function DataPage({
         />
       </div>
 
-      <div className="relative border-t border-ink/15 bg-ink/[0.04] px-4 py-1.5">
+      <div className="mrz-zone relative border-t border-ink/15 bg-ink/[0.04] px-4 py-1.5">
         {personMrz(person.fullName, sex).map((line, i) => (
           <p
             key={i}
-            className="mrz text-[0.42rem] leading-[1.8] whitespace-pre text-ink-soft/65"
+            className="mrz mrz-fit leading-[1.8] whitespace-pre text-ink-soft/65"
           >
             {line}
           </p>
@@ -129,15 +138,22 @@ function Field({
 }) {
   return (
     <div className="min-w-0">
-      <dt className="field-label text-ink-soft/75">{label}</dt>
+      <dt className="field-label text-ink-soft/75">{withSoftBreaks(label)}</dt>
+      {/* Dulu `truncate`. Di layar 320 px kolom ini hanya ~170 px, dan yang
+          terbaca di halaman data diri adalah "Rahmad J…" dan "Bapak H. Arma…" —
+          nama mempelai dan nama orang tuanya dipotong dengan elipsis. Nama orang
+          adalah hal terakhir yang boleh dipangkas; biarkan turun ke baris kedua.
+          Titik putus setelah garis miring diberikan lebih dulu lewat
+          `withSoftBreaks`, dan `[overflow-wrap:anywhere]` menjaga nama sepanjang
+          apa pun tetap di dalam kolomnya. */}
       <dd
-        className={
+        className={`break-words [overflow-wrap:anywhere] ${
           big
-            ? "display truncate text-[1.15rem] text-ink"
-            : "truncate text-[0.8rem] font-light text-ink-2"
-        }
+            ? "display text-[1.15rem] leading-snug text-ink"
+            : "text-[0.8rem] leading-snug font-light text-ink-2"
+        }`}
       >
-        {value}
+        {withSoftBreaks(value)}
       </dd>
     </div>
   );

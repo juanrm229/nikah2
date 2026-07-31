@@ -27,20 +27,37 @@ export function Journey() {
   const reachedIndex = reduced ? stops.length - 1 : flownIndex;
 
   // Tinggi kanvas rute mengikuti jumlah persinggahan.
-  const GAP = 150;
+  const GAP = 158;
   const height = stops.length * GAP;
-  const width = 120;
 
-  // Garis melengkung bergantian kiri-kanan, meniru jalur pesawat di peta.
+  /**
+   * Lebar jalur di tepi kiri.
+   *
+   * Versi sebelumnya menaruh rute di TENGAH dengan cerita berselang-seling
+   * kiri-kanan. Di desktop itu cantik; di ponsel 320 px tiap kolom cerita hanya
+   * ~120 px, dan kalimat seperti "Dari perkenalan yang singkat" pecah jadi enam
+   * baris berisi tiga kata. Rute yang dipindah ke tepi memberi cerita seluruh
+   * lebar yang tersisa — dan kebetulan justru lebih dekat dengan bentuk yang
+   * ditirunya: rute penerbangan pada tiket selalu dibaca dari atas ke bawah di
+   * satu sisi, bukan zig-zag.
+   */
+  const RAIL = 56;
+  const X = RAIL / 2;
+  /** Seberapa jauh jalur membusur ke samping di antara dua persinggahan. */
+  const BOW = 15;
+
+  // Jalur menyentuh TEPAT titik tiap persinggahan, lalu membusur bergantian ke
+  // kiri dan kanan di antaranya. Kalau persinggahannya sendiri yang digeser
+  // kiri-kanan, kode bandaranya tidak lagi duduk di atas jalur.
   const path = stops
     .map((_, i) => {
       const y = i * GAP + GAP / 2;
-      const x = i % 2 === 0 ? 46 : 74;
-      if (i === 0) return `M ${x} ${y}`;
+      if (i === 0) return `M ${X} ${y}`;
       const prevY = (i - 1) * GAP + GAP / 2;
-      const prevX = (i - 1) % 2 === 0 ? 46 : 74;
-      const midY = (prevY + y) / 2;
-      return `C ${prevX} ${midY}, ${x} ${midY}, ${x} ${y}`;
+      const bow = i % 2 ? BOW : -BOW;
+      const a = prevY + (y - prevY) * 0.35;
+      const b = prevY + (y - prevY) * 0.65;
+      return `C ${X + bow} ${a}, ${X - bow} ${b}, ${X} ${y}`;
     })
     .join(" ");
 
@@ -121,16 +138,16 @@ export function Journey() {
           {/* Kanvas rute, dibentangkan di belakang daftar persinggahan */}
           <svg
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-1/2 -translate-x-1/2"
-            width={width}
+            className="pointer-events-none absolute inset-y-0 left-0"
+            width={RAIL}
             height={height}
-            viewBox={`0 0 ${width} ${height}`}
+            viewBox={`0 0 ${RAIL} ${height}`}
             preserveAspectRatio="none"
             style={{ height: "100%" }}
           >
             <defs>
               <clipPath id="rute-terbang">
-                <rect ref={clipRef} x="0" y="0" width={width} height="0" />
+                <rect ref={clipRef} x="0" y="0" width={RAIL} height="0" />
               </clipPath>
             </defs>
 
@@ -171,31 +188,20 @@ export function Journey() {
             {stops.map((stop, i) => (
               <li
                 key={stop.code + stop.date}
-                className="flex items-center"
+                className="flex items-center gap-4"
                 style={{ height: GAP }}
               >
+                {/* Kode persinggahan, menyala saat pesawat melewatinya.
+                    Lebarnya persis selebar jalur, jadi ia duduk tepat di atas
+                    garis alih-alih di sebelahnya. */}
                 <div
-                  className={`w-[calc(50%-2.5rem)] ${
-                    i % 2 === 0 ? "order-3 text-left" : "order-1 text-right"
-                  }`}
+                  className="flex shrink-0 justify-center"
+                  style={{ width: RAIL }}
                 >
-                  <Reveal delay={i * 60} y={14}>
-                    <p className="field-label text-gold/70">{stop.date}</p>
-                    <p className="display mt-1 text-[1.15rem] leading-tight text-paper">
-                      {stop.title}
-                    </p>
-                    <p className="mt-1.5 text-[0.78rem] leading-snug font-light text-paper-dim">
-                      {stop.text}
-                    </p>
-                  </Reveal>
-                </div>
-
-                {/* Kode persinggahan, menyala saat pesawat melewatinya */}
-                <div className="order-2 flex w-20 shrink-0 justify-center">
                   <span
                     className={`mrz rounded-[2px] border px-2 py-1 text-[0.6rem] transition-colors duration-500 ${
                       i <= reachedIndex
-                        ? "border-gold/60 bg-gold/15 text-gold-2"
+                        ? "border-gold/60 bg-gold/15 text-gold-2 shadow-[0_0_18px_-4px_var(--color-gold)]"
                         : "border-paper/15 bg-ink-2 text-paper-dim/60"
                     }`}
                   >
@@ -203,7 +209,17 @@ export function Journey() {
                   </span>
                 </div>
 
-                <div className={`w-[calc(50%-2.5rem)] ${i % 2 === 0 ? "order-1" : "order-3"}`} />
+                <div className="min-w-0 flex-1">
+                  <Reveal delay={i * 60} y={14}>
+                    <p className="field-label text-gold/70">{stop.date}</p>
+                    <p className="display mt-1 text-[1.2rem] leading-tight text-paper">
+                      {stop.title}
+                    </p>
+                    <p className="mt-1.5 text-[0.8rem] leading-snug font-light text-paper-dim">
+                      {stop.text}
+                    </p>
+                  </Reveal>
+                </div>
               </li>
             ))}
           </ol>

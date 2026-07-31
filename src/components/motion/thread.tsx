@@ -22,10 +22,9 @@ export function ScrollThread() {
     if (!el) return;
 
     let raf = 0;
-    let queued = false;
 
     const measure = () => {
-      queued = false;
+      raf = 0;
       const max = document.documentElement.scrollHeight - window.innerHeight;
       const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
       el.style.setProperty("--p", p.toFixed(4));
@@ -34,9 +33,11 @@ export function ScrollThread() {
       el.style.setProperty("--shown", window.scrollY > 240 ? "1" : "0");
     };
 
+    // Jadwal ulang, bukan tolak-kalau-sudah-antre: rAF yang terjeda di tab
+    // tersembunyi akan meninggalkan flag antrean yang tidak pernah dibersihkan,
+    // dan benangnya berhenti mengikuti scroll tanpa satu pun error.
     const onScroll = () => {
-      if (queued) return;
-      queued = true;
+      if (raf) cancelAnimationFrame(raf);
       raf = requestAnimationFrame(measure);
     };
 

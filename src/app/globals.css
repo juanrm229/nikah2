@@ -59,6 +59,34 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: clip;
+  /* Tanpa ini, tarikan berlebih di ujung undangan memantulkan seluruh halaman
+     dan memperlihatkan latar peramban — di iOS malah bisa memicu pull-to-refresh
+     di tengah animasi. */
+  overscroll-behavior-y: none;
+  /* Kotak biru bawaan Android saat elemen disentuh merusak setiap permukaan
+     kertas yang susah payah dibuat. Umpan baliknya diberikan sendiri lewat
+     :active pada tiap kontrol. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Segel: keadaan sebelum sampul dibuka ───────────────────────────────────
+   Sampul adalah lapisan `fixed`, jadi ia tidak pernah ikut menggulir — tapi
+   dokumen di BELAKANGNYA tetap bisa. Akibatnya tamu yang menggeser layar
+   sambil menunggu ritual pembuka sudah berada di tengah undangan sebelum
+   sampulnya sempat terbuka, dan yang muncul sesudahnya bukan halaman pertama.
+
+   `overflow: hidden` saja tidak cukup di iOS — dokumennya masih memantul.
+   Membekukan body dengan `position: fixed` menutup jalan itu, dan aman karena
+   segel hanya hidup saat posisi gulir masih 0. */
+html.sealed {
+  overflow: hidden;
+}
+html.sealed body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 /* Lenis */
@@ -99,6 +127,40 @@ html.lenis body {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   word-break: break-all;
+}
+
+/* Zona MRZ yang menyesuaikan diri dengan lebar wadahnya.
+   Baris MRZ TD3 selalu 44 karakter dan selalu `whitespace-pre` — ia tidak bisa
+   turun baris, jadi ukuran huruf yang tetap berarti barisnya terpotong begitu
+   wadahnya lebih sempit dari perkiraan. Di layar 320 px, baris MRZ halaman data
+   diri butuh 231 px di dalam kolom selebar 206 px, dan 25 px terakhirnya hilang
+   di balik tepi kertas.
+
+   44 karakter × (0.6em lebar + 0.18em jarak) = 34.32em, jadi ukuran huruf paling
+   besar yang masih muat adalah 100cqi ÷ 34.32 ≈ 2.91cqi. Diambil 2.8 sebagai
+   jarak aman terhadap pembulatan pecahan piksel.
+
+   `min()` menjaga wadah yang lapang tetap memakai ukuran rancangannya —
+   baris MRZ tidak boleh ikut membesar sampai berteriak. */
+@utility mrz-zone {
+  container-type: inline-size;
+}
+@utility mrz-fit {
+  font-size: min(var(--mrz-cap, 0.42rem), 2.8cqi);
+}
+
+/* Kalimat yang HANYA meminjam tampilan MRZ.
+   `mrz` memakai word-break:break-all — benar untuk baris mesin, dan tak pernah
+   terpakai di sana karena baris aslinya selalu whitespace-pre. Yang kena
+   justru kalimat manusia: "MOHON HADIR TEPAT WAKTU" patah jadi "HADIR T /
+   EPAT WAKTU". Varian ini memutus antar kata seperti teks biasa. */
+@utility mrz-text {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 /* Foil emas yang memantul — dipakai pada teks emboss sampul */
@@ -151,6 +213,31 @@ html.lenis body {
 /* Grain kertas halus, ditumpuk di atas panel terang */
 @utility grain {
   position: relative;
+}
+
+/* Grain untuk permukaan GELAP. `multiply` pada kulit sampul navy hanya
+   membuatnya lebih hitam; `overlay` menaikkan dan menurunkan sekaligus, jadi
+   yang terbaca adalah pori kulit, bukan kotoran. */
+@utility grain-dark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.14;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Serat kulit sampul: dua sapuan garis nyaris tak kasat mata yang saling
+   menyilang. Bukan tekstur foto — hanya cukup untuk memberi permukaan arah,
+   supaya kilau yang melintas punya sesuatu untuk dipantulkan. */
+@utility leather {
+  background-image:
+    repeating-linear-gradient(
+      97deg,
+      rgba(255, 255, 255, 0.022) 0 1px,
+      transparent 1px 3px
+    ),
+    repeating-linear-gradient(4deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 4px);
 }
 @utility grain-layer {
   content: "";
@@ -322,6 +409,44 @@ html.lenis body {
   }
 }
 
+/* Cahaya yang menyembur dari halaman terbuka, tepat saat sampul selesai
+   berayun. Inilah yang menyambung "paspor dibuka" dengan "undangan dimulai":
+   tanpa kilatan ini, sampul cuma memudar dan tamu melihat potongan. */
+@keyframes bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  38% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+/* Kilau setipis rambut yang menyusuri bingkai emas sampul, sekali tiap
+   beberapa detik — seperti cahaya ruangan yang lewat di atas cetakan foil. */
+@keyframes hairline {
+  0%,
+  62% {
+    transform: translateY(-110%);
+  }
+  100% {
+    transform: translateY(210%);
+  }
+}
+
+@utility animate-bloom {
+  animation: bloom 900ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@utility animate-hairline {
+  animation: hairline 6.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  will-change: transform;
+}
+
 @utility animate-cover-settle {
   animation: cover-settle 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -406,6 +531,43 @@ html.lenis body {
     rgba(176, 141, 79, 0.22) 88%,
     transparent 100%
   );
+}
+
+/* ── Ergonomi layar sentuh ───────────────────────────────────────────────────
+   Mayoritas tamu membuka undangan ini dari ponsel, dan dua hal kecil di bawah
+   menentukan apakah mengisi RSVP terasa mulus atau menjengkelkan. Keduanya
+   hanya berlaku pada penunjuk KASAR, jadi tata letak desktop tidak ikut
+   berubah. */
+@media (pointer: coarse) {
+  /* Safari iOS memperbesar SELURUH halaman begitu kolom isian dengan ukuran
+     huruf di bawah 16 px mendapat fokus — dan zoom itu tidak pernah pulih
+     sendiri. Tamu ditinggalkan di undangan yang tiba-tiba terpotong di kanan,
+     tanpa tahu apa yang barusan terjadi. Ini satu-satunya cara mencegahnya
+     tanpa mematikan cubit-untuk-perbesar (`maximum-scale=1` melakukan itu, dan
+     itu merampas hak tamu yang penglihatannya terbatas). */
+  input:not([type="radio"]):not([type="checkbox"]):not([type="file"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  /* Sasaran sentuh setinggi jari, bukan setinggi teks. Tombol pil di undangan
+     ini rata-rata 42–43 px — cukup dekat untuk terlihat baik-baik saja di
+     tangkapan layar, dan cukup jauh untuk sering meleset di tangan yang sedang
+     berjalan. `min-height` tidak berlaku pada elemen inline non-replaced, jadi
+     tautan di tengah kalimat tidak ikut terpengaruh; hanya yang sudah punya
+     kotak sendiri. */
+  input:not([type="radio"]):not([type="checkbox"]):not([type="file"]),
+  select {
+    min-height: 44px;
+  }
+  textarea {
+    min-height: 88px;
+  }
+  button,
+  a[href] {
+    min-height: 44px;
+  }
 }
 
 /* ── Aksesibilitas ───────────────────────────────────────────────────────── */

@@ -59,7 +59,7 @@ export function Rundown() {
 
             {/* Kaki papan, meniru pita pengumuman di bawah papan bandara */}
             <div className="border-t border-paper/12 bg-black/35 px-4 py-2">
-              <p className="mrz text-[0.5rem] text-gold/45">
+              <p className="mrz-text text-[0.5rem] text-gold/45">
                 {wedding.events[0].venue} · Mohon hadir tepat waktu
               </p>
             </div>
