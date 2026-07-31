@@ -87,7 +87,7 @@ function DataPage({
             fill
             sizes="116px"
             style={{ objectPosition: person.photoFocus }}
-            className="object-cover grayscale contrast-[1.05]"
+            className="object-cover"
           />
         </div>
 
@@ -100,7 +100,12 @@ function DataPage({
         </dl>
       </div>
 
-      {/* Foto hantu — cetakan kedua yang lebih pucat, persis paspor asli */}
+      {/* Foto hantu — cetakan kedua yang lebih pucat, persis paspor asli.
+          Yang satu ini SENGAJA tetap tak berwarna, dan bukan karena terlewat:
+          ia bukan foto yang dipajang, melainkan cetakan pengaman di balik
+          data — pada paspor sungguhan pun ia selalu satu nada. Difoto berwarna
+          dengan `mix-blend-multiply`, ia akan menyemburkan warna ke kertas
+          gading di belakang kolom nama. */}
       <div className="pointer-events-none absolute top-4 right-4 h-[92px] w-[70px] opacity-[0.13] mix-blend-multiply">
         <Image
           src={person.photo}

@@ -13,6 +13,10 @@ import { useParallax } from "@/components/motion/parallax";
  *
  * Foto ditata tidak rata tinggi supaya terbaca sebagai tempelan di halaman
  * paspor, bukan grid produk. Ditekan untuk melihat penuh.
+ *
+ * Fotonya BERWARNA. Versi awal memakai `grayscale` supaya seluruh undangan
+ * satu nada dengan tenun hitam-putih, tapi itu mengorbankan hal yang justru
+ * paling ingin dilihat tamu.
  */
 export function Gallery() {
   const [active, setActive] = useState<number | null>(null);
@@ -88,12 +92,25 @@ export function Gallery() {
                       fill
                       sizes="(max-width: 448px) 50vw, 224px"
                       style={{ objectPosition: photo.focus }}
-                      className="scale-[1.12] object-cover grayscale transition-transform duration-700 group-hover:scale-[1.18]"
+                      className="scale-[1.12] object-cover transition-transform duration-700 group-hover:scale-[1.18]"
                     />
                   </span>
                 </span>
-                <span className="pointer-events-none absolute inset-0 bg-ink/15 transition-opacity duration-500 group-hover:opacity-0" />
-                <span className="field-label pointer-events-none absolute bottom-2 left-2 text-paper/70">
+                {/* Dulu lapisan `bg-ink/15` rata yang memudar saat hover. Di
+                    ponsel tidak ada hover, jadi yang tersisa hanyalah tirai
+                    gelap permanen di atas setiap foto — tidak terasa selama
+                    fotonya hitam-putih, tapi langsung terasa begitu warnanya
+                    kembali. Diganti gradien dari bawah: nomor lembar visanya
+                    tetap terbaca di atas foto seterang apa pun, dan warna di
+                    dua pertiga atasnya tidak disentuh sama sekali. */}
+                <span
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(to top, rgba(18,16,14,0.62) 0%, rgba(18,16,14,0.16) 34%, transparent 62%)",
+                  }}
+                />
+                <span className="field-label pointer-events-none absolute bottom-2 left-2 text-paper/85">
                   {String(i + 1).padStart(2, "0")}
                 </span>
               </button>
