@@ -34,6 +34,19 @@
   --color-stamp: #2f4b7c;
   --color-stamp-red: #8c2f2f;
 
+  /* Jalur bea cukai. Hijau bandara sungguhan jauh lebih terang dari ini;
+     diredam sampai setara nada stempel supaya papan jalurnya terbaca sebagai
+     cetakan tua di halaman kertas, bukan sebagai tombol aplikasi. */
+  --color-lane: #2f6b46;
+
+  /* Lampu UV — cahaya lampunya, lalu dua warna pendar tinta pengaman.
+     Sengaja biru-sian dan ungu, bukan hijau neon: yang ditiru adalah tinta
+     fluoresen paspor, bukan stabilo. */
+  --color-uv: #6d4bff;
+  --color-uv-glow: #8ef2ff;
+  --color-uv-glow-2: #c2a3ff;
+  --color-uv-glow-3: #ffc978;
+
   --font-display: var(--font-display), "Cormorant Garamond", serif;
   --font-body: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
@@ -533,6 +546,218 @@ html.lenis body {
     rgba(176, 141, 79, 0.22) 88%,
     transparent 100%
   );
+}
+
+/* ── Lembar yang terangkat dari tumpukan ─────────────────────────────────────
+   Separuh kedua dari gerak halaman: `Reveal turn` menurunkan kertas yang masuk,
+   ini mengangkat kertas yang keluar. `--leaf` diisi per-frame di <LeafExit>.
+
+   `perspective()` ditulis di dalam daftar transform-nya sendiri, bukan
+   diandalkan dari elemen induk: halaman paspor memang punya induk berperspektif,
+   tapi kartu penutup tidak — dan tanpa titik hilang, rotasi X ada tapi tidak
+   terlihat sama sekali. Ditulis di sini, tiap lembar membawa perspektifnya
+   sendiri ke mana pun ia dipasang. */
+@utility leaf-exit {
+  transform-origin: 50% 100%;
+  transform: perspective(1400px) rotateX(calc(var(--leaf, 0) * 7deg))
+    scale(calc(1 - var(--leaf, 0) * 0.06));
+  backface-visibility: hidden;
+}
+
+/* Dipasang hanya selama lembarnya bergerak — lihat catatan lapisan komposit
+   di leaf.tsx. */
+.leaf-exit.is-turning {
+  will-change: transform;
+}
+
+@utility leaf-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Lebih gelap di kepala halaman: di sanalah lembar berikutnya menutupinya
+     lebih dulu. Bayangan yang rata hanya terbaca sebagai lampu yang diredupkan,
+     bukan sebagai kertas yang menaungi kertas. */
+  background: linear-gradient(
+    to bottom,
+    rgba(9, 7, 5, 0.75) 0%,
+    rgba(9, 7, 5, 0.4) 45%,
+    rgba(9, 7, 5, 0.16) 100%
+  );
+  opacity: calc(var(--leaf, 0) * 0.85);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Lampu UV
+   Paspor sungguhan menyembunyikan lapisan kedua yang hanya terbaca di bawah
+   sinar ultraviolet. Di sini lapisan itu ada betulan: tekan & tahan layar, dan
+   ruangan "dipadamkan" sementara satu lingkaran cahaya mengikuti jari.
+
+   Susunannya dua tingkat, dan urutannya penting:
+     1. Tiap permukaan yang punya rahasia memasang PEMADAM-nya sendiri
+        (`uv-blackout`) di atas isinya, lalu tinta pendarnya di atas pemadam.
+        Tanpa langkah ini, tinta sian akan menyala di atas kertas gading yang
+        masih terang benderang — dan tidak ada yang terbaca sebagai "menyala".
+     2. Sorot lampu (`uv-beam`) menggelapkan SELURUH layar kecuali lingkaran di
+        bawah jari. Ia hidup di atas segalanya, jadi ia juga yang memutuskan
+        bagian mana dari rahasia itu yang boleh terlihat.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Menahan jari di layar Android memanggil pilih-teks dan menu tahan-lama;
+   dua-duanya merusak ritualnya. Disetel sejak jari MENYENTUH (`uv-arming`),
+   bukan sejak lampunya menyala — kalau menunggu, menu bawaan keburu muncul. */
+html.uv-arming,
+html.uv {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.uv-blackout,
+.uv-ink {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 380ms ease-out;
+}
+html.uv .uv-blackout,
+html.uv .uv-ink {
+  opacity: 1;
+}
+
+/* Bukan hitam murni: lampu UV selalu menumpahkan sedikit ungu ke permukaan
+   yang disinarinya, dan itulah yang membedakan "lampu dimatikan" dari
+   "layar ditutup kain hitam". */
+.uv-blackout {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 6, 24, 0.945);
+}
+
+/* Pendar tinta. Dua lapis bayangan — satu ketat, satu melebar — karena cahaya
+   yang benar-benar dipancarkan selalu punya inti dan halo. */
+.uv-glow {
+  filter: drop-shadow(0 0 5px var(--color-uv-glow))
+    drop-shadow(0 0 16px rgba(110, 80, 255, 0.5));
+}
+
+/* Cetakan mikro tepi halaman. Kecil sampai nyaris tak bisa dibaca — memang
+   begitu maunya; di paspor, microtext ada untuk DILIHAT ADA, bukan untuk
+   dibaca. */
+.uv-micro {
+  font-family: var(--font-mono);
+  font-size: 0.36rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Sorot lampu. Radius diberikan lewat --uv-r supaya bisa dikecilkan di layar
+   sempit tanpa menyentuh satu pun nilai lain. */
+.uv-beam {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+  --uv-r: 140px;
+  --uv-x: 50%;
+  --uv-y: 50%;
+}
+.uv-beam.is-on {
+  opacity: 1;
+  animation: uv-ignite 620ms ease-out;
+}
+.uv-beam > div {
+  position: absolute;
+  inset: 0;
+}
+
+/* Di luar lingkaran, ruangan gelap. Perhentian gradiennya relatif terhadap
+   --uv-r, jadi apa pun di luar radius mendapat warna perhentian terakhir. */
+.uv-beam-dark {
+  background: radial-gradient(
+    circle var(--uv-r) at var(--uv-x) var(--uv-y),
+    transparent 0%,
+    rgba(6, 4, 18, 0.5) 64%,
+    rgba(5, 3, 14, 0.94) 100%
+  );
+}
+
+/* Warna lampunya sendiri, ditumpahkan ke permukaan yang kena. */
+.uv-beam-cast {
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    circle var(--uv-r) at var(--uv-x) var(--uv-y),
+    rgba(124, 86, 255, 0.28) 0%,
+    rgba(88, 58, 190, 0.13) 55%,
+    transparent 74%
+  );
+}
+
+/* Tepi berkas cahaya. Satu cincin tipis — tanpanya sorotnya terbaca sebagai
+   lubang di lapisan gelap, bukan sebagai lampu yang dipegang. */
+.uv-beam-ring {
+  background: radial-gradient(
+    circle var(--uv-r) at var(--uv-x) var(--uv-y),
+    transparent 66%,
+    rgba(170, 132, 255, 0.28) 72%,
+    transparent 79%
+  );
+}
+
+/* Lampu neon UV tidak menyala mulus — ia berkedip dua kali sebelum mantap. */
+@keyframes uv-ignite {
+  0% {
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  22% {
+    opacity: 0.25;
+  }
+  34% {
+    opacity: 1;
+  }
+  44% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ── Kinegram sampul ─────────────────────────────────────────────────────────
+   Tambalan laminasi difraksi di atas halaman data paspor: pelangi yang hanya
+   muncul pada rentang kemiringan yang sempit, lalu hilang lagi. `--kine`
+   dihitung per-frame di <Cover> dari sudut yang sama yang menggerakkan foil —
+   satu sumber cahaya untuk seluruh sampul.
+
+   `color-dodge` dipilih karena ia hanya bekerja pada piksel yang SUDAH terang:
+   pelanginya menempel di garis emas dan permukaan yang memantul, dan lewat
+   begitu saja di atas kulit navy yang gelap. Persis seperti benda aslinya. */
+@utility kinegram {
+  opacity: calc(var(--kine, 0) * 0.9);
+  mix-blend-mode: color-dodge;
+  background:
+    repeating-linear-gradient(
+      104deg,
+      rgba(255, 90, 140, 0.5) 0px,
+      rgba(255, 210, 90, 0.5) 7px,
+      rgba(120, 255, 190, 0.5) 14px,
+      rgba(120, 190, 255, 0.5) 21px,
+      rgba(200, 120, 255, 0.5) 28px,
+      rgba(255, 90, 140, 0.5) 35px
+    );
+  background-size: 280% 100%;
+  background-position: var(--kine-x, 50%) 0;
+  /* Garis difraksi yang rapat, lalu tepi yang dilembutkan supaya tambalannya
+     tidak berujung sebagai persegi panjang yang jelas batasnya. */
+  mask-image:
+    repeating-linear-gradient(76deg, black 0 2.5px, transparent 2.5px 6.5px),
+    radial-gradient(120% 130% at 50% 50%, black 42%, transparent 82%);
+  mask-composite: intersect;
 }
 
 /* ── Ergonomi layar sentuh ───────────────────────────────────────────────────

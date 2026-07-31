@@ -5,6 +5,7 @@ import { Stamp } from "@/components/passport/stamp";
 import { Reveal } from "@/components/motion/reveal";
 import { wedding } from "@/config/wedding";
 import { eventDateParts, formatDateLong, formatTime, zoneLabel } from "@/lib/datetime";
+import { ShareCard } from "@/components/sections/share-card";
 
 /**
  * Boarding pass personal — hanya muncul di /to/[slug].
@@ -20,11 +21,14 @@ export function BoardingPass({
   seats,
   qrSvg,
   mrz,
+  serial,
 }: {
   name: string;
   greeting?: string | null;
   tableNo?: string | null;
   seats: number;
+  /** Nomor paspor tamu — angka yang sama yang tercetak di slip sampul. */
+  serial: string;
   /** Markup SVG QR, dirender `checkinQrSvg()` di server. */
   qrSvg: string;
   /** Dua baris MRZ TD3, seperti halaman data diri. */
@@ -40,6 +44,7 @@ export function BoardingPass({
       page="Hal. 05"
       stampPosition="top-right"
       stamp={<Stamp top="BOARDING" bottom={flight} center="OK" rotate={-12} size={92} />}
+      uvSeed={41}
     >
       <Heading label="Khusus Untukmu" title="Boarding Pass" />
 
@@ -61,6 +66,14 @@ export function BoardingPass({
             </div>
 
             <p className="display mt-2 text-[1.35rem] break-words text-ink">{name}</p>
+
+            {/* Nomor paspor duduk tepat di bawah nama, di tempat yang sama
+                dengan nomor dokumen pada halaman data diri paspor sungguhan —
+                bukan diselipkan di kaki kartu sebagai keterangan tambahan. */}
+            <p className="mrz-text mt-1 text-[0.55rem] text-ink-soft/70">
+              No. Paspor<span className="mx-1">·</span>
+              {serial}
+            </p>
 
             <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-dashed border-ink/20 pt-3">
               <Cell label="Meja" value={tableNo?.trim() || "—"} />
@@ -111,6 +124,18 @@ export function BoardingPass({
         Kartu ini berlaku untuk {seats} orang. Cukup tunjukkan QR di atas kepada
         petugas saat tiba.
       </p>
+
+      <ShareCard
+        name={name}
+        serial={serial}
+        flight={flight}
+        tableNo={tableNo?.trim() || "—"}
+        seats={seats}
+        dateLong={formatDateLong(event.start)}
+        timeText={`${formatTime(event.start)} ${zoneLabel(event.start)}`}
+        venue={event.venue}
+        mrz={mrz}
+      />
     </PassportPage>
   );
 }

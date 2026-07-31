@@ -133,6 +133,19 @@ export const wedding = {
     source: "QS. Ar-Rum: 21",
   },
 
+  // ── Tinta tersembunyi ────────────────────────────────────────────────────
+  // Hanya terbaca di bawah "lampu UV" — tekan & tahan layar di halaman mana pun.
+  //
+  // Isinya sengaja BUKAN informasi yang dibutuhkan tamu. Tamu yang tidak pernah
+  // menemukan lampunya tidak kehilangan apa pun; yang menemukannya mendapat
+  // sesuatu yang tidak dibagikan ke semua orang. Begitu di sini ditaruh jam
+  // acara atau alamat, easter egg-nya berubah jadi jebakan.
+  uv: {
+    seal: "Republik Cinta",
+    motto: "Sakinah · Mawaddah · Warahmah",
+    blessing: "Semoga Allah memberkahi keduanya, dan menghimpun mereka dalam kebaikan.",
+  },
+
   // ── Penutup ──────────────────────────────────────────────────────────────
   // Kalimat penutup undangan. Bukan data dari sumber, murni redaksi — boleh
   // diganti sesuka hati tanpa memeriksa apa pun.
@@ -148,19 +161,33 @@ export const wedding = {
   // (BRI 15 digit, BCA 10 digit) agar tata letak dan pemenggalan teks bisa
   // diuji dengan bentuk yang realistis.
   //
-  // `enabled: false` adalah pengamannya, bukan sekadar bawaan: repo ini publik
-  // dan situsnya sudah live di produksi, jadi menyalakannya sebelum nomor asli
-  // masuk berarti memajang rekening karangan ke tamu yang mungkin benar-benar
-  // mentransfer. Nyalakan HANYA bersamaan dengan mengisi nomor yang sah.
+  // ⚠ SEDANG MENYALA DENGAN DATA CONTOH — atas permintaan pemilik, supaya
+  // rancangannya bisa dilihat selagi undangan BELUM disebar ke siapa pun.
   //
-  // TODO: ganti seluruh isi banks dengan data sah, lalu set enabled: true.
+  // Yang menjaga keadaan ini tetap aman bukan saklarnya, melainkan bentuk
+  // datanya: nomornya nol semua, nama pemiliknya berbunyi "CONTOH — BELUM
+  // DIISI", dan gambar QRIS-nya bertuliskan CONTOH melintang di tengah serta
+  // sengaja tidak bisa dipindai. Tidak ada satu pun dari ketiganya yang bisa
+  // menerima uang, bahkan kalau ada yang mencoba.
+  //
+  // TODO — WAJIB, SEBELUM SATU LINK PUN DIBAGIKAN: ganti seluruh isi banks,
+  // qris, dan address dengan data sah. Kalau nomor asli belum siap saat
+  // undangan mau disebar, kembalikan `enabled: false` — memajang rekening
+  // karangan ke tamu yang mungkin benar-benar mentransfer adalah satu-satunya
+  // kesalahan di undangan ini yang tidak bisa diperbaiki dengan deploy ulang.
   gift: {
-    enabled: false,
+    enabled: true,
+    // Kalimat di jalur hijau. Ia yang menentukan nada seluruh bagian ini:
+    // jalur hijau adalah jawaban BAWAAN, dan tamu yang memilihnya tidak sedang
+    // menolak apa pun — ia sedang memberi hal yang memang paling diminta.
+    note: "Kehadiran dan doa restu Bapak/Ibu/Saudara/i sudah lebih dari cukup bagi kami.",
     banks: [
       { bank: "BRI", number: "000000000000000", holder: "CONTOH — BELUM DIISI" },
       { bank: "BCA", number: "0000000000", holder: "CONTOH — BELUM DIISI" },
     ] as { bank: string; number: string; holder: string }[],
-    qris: "", // TODO: path gambar QRIS di /public, cth "/qris.png"
+    // Placeholder yang sengaja TIDAK bisa dipindai, bertuliskan CONTOH
+    // melintang di tengah. TODO: ganti dengan gambar QRIS yang sah.
+    qris: "/qris-contoh.svg",
     address: {
       // Kirim kado fisik
       label: "Kirim hadiah",

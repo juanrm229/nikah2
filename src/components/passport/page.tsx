@@ -1,6 +1,11 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { IkatBand, IkatOrnament } from "@/components/tenun/ikat";
 import { Reveal } from "@/components/motion/reveal";
+import { UvLayer } from "@/components/uv/layer";
+import { PaperSound } from "@/components/passport/paper-sound";
+import { useLeafExit, LeafShade } from "@/components/motion/leaf";
 
 /**
  * Satu halaman paspor: kertas gading dengan pita tenun di kepala dan kaki,
@@ -15,6 +20,8 @@ export function PassportPage({
   stampPosition = "bottom-right",
   className = "",
   id,
+  uv,
+  uvSeed = 11,
 }: {
   children: ReactNode;
   /** Nomor halaman yang dicetak di kaki kertas. */
@@ -30,7 +37,17 @@ export function PassportPage({
   stampPosition?: "bottom-right" | "bottom-left" | "top-right";
   className?: string;
   id?: string;
+  /**
+   * Rahasia yang hanya terbaca di bawah lampu UV pada halaman ini. Motif,
+   * segel, serat pengaman, dan nomor dokumen sudah dipasang untuk SETIAP
+   * halaman — ini tambahan yang khas halaman bersangkutan.
+   */
+  uv?: ReactNode;
+  /** Benih serat pengaman. Beda per halaman; tak ada dua lembar yang kembar. */
+  uvSeed?: number;
 }) {
+  const leaf = useLeafExit<HTMLDivElement>();
+
   // Kertasnya overflow-hidden, jadi stempel ditaruh di dalam tepi — bukan
   // menggantung keluar, yang hanya akan terpotong separuh.
   const stampPlacement = {
@@ -49,9 +66,12 @@ export function PassportPage({
     >
       <Reveal className="mx-auto w-full max-w-md" y={26} turn={7}>
         <div
-          className={`grain relative overflow-hidden rounded-[2px] bg-paper text-ink shadow-[0_30px_60px_-25px_rgba(0,0,0,0.85)] ${className}`}
+          ref={leaf}
+          className={`leaf-exit grain relative overflow-hidden rounded-[2px] bg-paper text-ink shadow-[0_30px_60px_-25px_rgba(0,0,0,0.85)] ${className}`}
         >
           <div className="grain-layer" />
+
+          <PaperSound />
 
           <IkatBand className="w-full opacity-30" height={14} color="var(--color-ink)" />
 
@@ -73,6 +93,17 @@ export function PassportPage({
           <IkatBand className="w-full opacity-30" height={14} color="var(--color-ink)" flip />
 
           {stamp && <div className={`absolute z-10 ${stampPlacement}`}>{stamp}</div>}
+
+          {/* Bayangan lembar berikutnya. Ditaruh SEBELUM lapisan UV: saat lampu
+              menyala, pemadamnya harus menang atas segalanya — termasuk atas
+              bayangan ini. */}
+          <LeafShade />
+
+          {/* Anak terakhir, dan itu bukan kebetulan: pemadam UV harus jatuh di
+              atas SELURUH isi halaman — termasuk stempel — kalau tidak, yang
+              terlihat di bawah lampu adalah stempel biru yang mengambang di
+              ruang gelap. */}
+          <UvLayer seed={uvSeed}>{uv}</UvLayer>
         </div>
       </Reveal>
     </section>

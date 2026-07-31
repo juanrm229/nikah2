@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { wedding } from "@/config/wedding";
 import { withSoftBreaks } from "@/lib/text";
 import { IkatBand, IkatField } from "@/components/tenun/ikat";
@@ -9,8 +9,8 @@ import { Overture } from "@/components/motion/overture";
 import { Dust } from "@/components/motion/dust";
 import { eventDateParts } from "@/lib/datetime";
 import { coupleMrz } from "@/lib/wedding-mrz";
+import { armSfx, sfxCover } from "@/lib/sfx";
 
-const mrz = coupleMrz();
 const coverDate = eventDateParts(wedding.events[0].start);
 
 /**
@@ -76,7 +76,24 @@ const DESIGN_W = 320;
  * engsel di tepi kiri, halaman-halamannya ikut terbalik, dan cahaya dari
  * dalamnya yang menyerahkan layar ke isi undangan.
  */
-export function Cover({ guestName, onOpen }: { guestName?: string; onOpen: () => void }) {
+export function Cover({
+  guestName,
+  serial,
+  onOpen,
+}: {
+  guestName?: string;
+  /**
+   * Nomor paspor tamu ini. Dibiarkan kosong pada undangan umum — di sana yang
+   * berlaku adalah nomor dokumen pernikahannya sendiri.
+   */
+  serial?: string;
+  onOpen: () => void;
+}) {
+  // Dihitung per render, bukan sekali di tingkat modul: nomor dokumennya
+  // berbeda per tamu, dan digit pemeriksa di baris kedua ikut berubah
+  // bersamanya.
+  const mrz = useMemo(() => coupleMrz(serial), [serial]);
+
   const cardRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
@@ -172,6 +189,15 @@ export function Cover({ guestName, onOpen }: { guestName?: string; onOpen: () =>
         "--ovd-b",
         (1 + Math.max(0, 1 - Math.abs(current.ry) / 7) * 0.22).toFixed(3),
       );
+      // Kinegram: tambalan laminasi difraksi. Ia tidak memudar masuk-keluar
+      // mengikuti kemiringan secara lurus — ia menyala hanya pada SATU PITA
+      // sudut yang sempit di sekitar 6°, lalu padam lagi di kedua sisinya.
+      // Itulah yang membedakannya dari kilau biasa: hologram sungguhan punya
+      // sudut pandang yang benar, dan tamu yang memiringkan ponselnya
+      // menemukan sudut itu sendiri.
+      const tilt = Math.abs(current.ry);
+      card.style.setProperty("--kine", Math.max(0, 1 - Math.abs(tilt - 6) / 4.2).toFixed(3));
+      card.style.setProperty("--kine-x", `${(50 - current.ry * 7).toFixed(1)}%`);
       raf = requestAnimationFrame(apply);
     };
     raf = requestAnimationFrame(apply);
@@ -203,6 +229,16 @@ export function Cover({ guestName, onOpen }: { guestName?: string; onOpen: () =>
   }, []);
 
   const handleOpen = () => {
+    // Mesin suara lahir DI SINI, di dalam penangan tekanan tombol. Ini
+    // satu-satunya tempat yang sah: AudioContext yang dibuat di luar gerakan
+    // pengguna lahir dalam keadaan `suspended`, dan derit sampul — bunyi
+    // pertama yang didengar tamu — hilang tanpa pesan galat apa pun.
+    armSfx();
+    sfxCover();
+    // Getaran sependek dua ketukan: kunci yang terbuka, lalu sampul yang
+    // berayun. Hanya Android; iOS mengabaikannya tanpa mengeluh.
+    navigator.vibrate?.([11, 46, 18]);
+
     setLeaving(true);
     window.setTimeout(onOpen, OPEN.handoff);
   };
@@ -400,6 +436,18 @@ export function Cover({ guestName, onOpen }: { guestName?: string; onOpen: () =>
                         }}
                       />
 
+                      {/* Tambalan kinegram, membentang miring melintasi muka
+                          sampul. Ditaruh SEBELUM bingkai dan isinya di urutan
+                          DOM tapi tetap terlihat di atasnya karena
+                          `color-dodge` hanya menaikkan piksel yang sudah
+                          terang — yang dinaikkannya justru garis emas dan
+                          cetakan foil, bukan kulit navy di sekitarnya. */}
+                      <div
+                        aria-hidden
+                        className="kinegram pointer-events-none absolute inset-x-2 top-[26%] h-[96px]"
+                        style={{ transform: "rotate(-6deg)" }}
+                      />
+
                       {/* Punggung buku di tepi kiri — engsel tempat sampul berputar */}
                       <div
                         aria-hidden
@@ -522,6 +570,17 @@ export function Cover({ guestName, onOpen }: { guestName?: string; onOpen: () =>
                           <span className="mx-1">&amp;</span>
                           {wedding.couple.bride.name.toUpperCase()}
                         </p>
+
+                        {/* Nomor paspor tamu. Hanya muncul di undangan personal
+                            — pada undangan umum tidak ada seorang pun yang
+                            paspornya sedang dipegang, dan nomor yang sama untuk
+                            semua orang justru membatalkan seluruh maksudnya. */}
+                        {serial && (
+                          <p className="mrz-text mt-1 text-[0.45rem] text-gold-3/75">
+                            No. Paspor<span className="mx-1">·</span>
+                            {serial}
+                          </p>
+                        )}
                       </div>
 
                       <TenunEmblem className="shrink-0 text-gold-3/45" size={34} />

@@ -5,7 +5,7 @@ import { adminConfigured, supabaseAdmin } from "@/lib/supabase/admin";
 import { toPublicGuest, type Guest } from "@/lib/supabase/types";
 import { checkinQrSvg } from "@/lib/qr";
 import { activeTrack } from "@/lib/music";
-import { guestMrz } from "@/lib/wedding-mrz";
+import { guestMrz, guestSerial } from "@/lib/wedding-mrz";
 
 /**
  * Undangan personal.
@@ -41,6 +41,10 @@ export default async function PersonalInvitation({ params }: PageProps<"/to/[slu
   const guest = data as Guest;
   const [qrSvg, track] = await Promise.all([checkinQrSvg(guest.checkin_code), activeTrack()]);
 
+  // Nomor paspor tamu. Dihitung dari slug, bukan dari `checkin_code` — kode itu
+  // adalah pengaman check-in dan tidak boleh punya jejak apa pun di layar.
+  const serial = guestSerial(guest.slug);
+
   return (
     <Invitation
       guest={toPublicGuest(guest)}
@@ -52,7 +56,8 @@ export default async function PersonalInvitation({ params }: PageProps<"/to/[slu
           tableNo={guest.table_no}
           seats={guest.seats}
           qrSvg={qrSvg}
-          mrz={guestMrz(guest.name)}
+          serial={serial}
+          mrz={guestMrz(guest.name, serial)}
         />
       }
     />

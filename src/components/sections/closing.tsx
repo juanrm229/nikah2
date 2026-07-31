@@ -1,3 +1,5 @@
+"use client";
+
 import { wedding } from "@/config/wedding";
 import { Reveal } from "@/components/motion/reveal";
 import { Stamp } from "@/components/passport/stamp";
@@ -5,6 +7,9 @@ import { IkatField } from "@/components/tenun/ikat";
 import { TenunEmblem } from "@/components/tenun/emblem";
 import { eventDateParts } from "@/lib/datetime";
 import { coupleMrz } from "@/lib/wedding-mrz";
+import { UvLayer } from "@/components/uv/layer";
+import { useSerial } from "@/components/passport/serial";
+import { useLeafExit, LeafShade } from "@/components/motion/leaf";
 
 /**
  * Halaman terakhir paspor — penutup undangan.
@@ -18,8 +23,6 @@ import { coupleMrz } from "@/lib/wedding-mrz";
  * Bedanya dari sampul hanya satu, dan itu penting: stempel keluar. Sampul masih
  * bersih, halaman terakhir sudah penuh cap — persis paspor yang sudah dipakai.
  */
-
-const mrz = coupleMrz();
 
 /**
  * Tanggal acara untuk badan stempel, mis. "15.11.26".
@@ -36,10 +39,21 @@ function stampDate(): string {
 export function Closing() {
   const { groom, bride } = wedding.couple;
 
+  // Nomor yang sama dengan yang tercetak di sampul — termasuk digit
+  // pemeriksanya, yang dihitung ulang dari nomor itu. Halaman terakhir meniru
+  // sampul sampai ke barisan mesinnya; nomor yang berbeda di antara keduanya
+  // akan membatalkan seluruh tiruan itu dalam satu tatapan.
+  const serial = useSerial();
+  const mrz = coupleMrz(serial);
+  const leaf = useLeafExit<HTMLDivElement>();
+
   return (
     <section id="penutup" className="relative px-4 pt-[clamp(3rem,10vh,6rem)] pb-[clamp(2rem,8vh,4rem)]">
       <Reveal className="mx-auto w-full max-w-sm" y={26}>
-        <div className="relative overflow-hidden rounded-[3px] bg-cover shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)]">
+        <div
+          ref={leaf}
+          className="leaf-exit relative overflow-hidden rounded-[3px] bg-cover shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)]"
+        >
           <div className="pointer-events-none absolute inset-0">
             <IkatField color="var(--color-gold)" opacity={0.07} scale={1.1} className="h-full w-full" />
           </div>
@@ -112,6 +126,16 @@ export function Closing() {
               </p>
             ))}
           </div>
+
+          <LeafShade />
+
+          {/* Halaman terakhir menyimpan rahasia yang paling pantas ada di sana:
+              doa penutup, yang tidak pernah dicetak di permukaan mana pun. */}
+          <UvLayer tone="cover" seed={53}>
+            <p className="uv-glow absolute inset-x-7 bottom-[13%] text-center text-[0.74rem] leading-relaxed font-light text-[var(--color-uv-glow)]">
+              {wedding.uv.blessing}
+            </p>
+          </UvLayer>
         </div>
       </Reveal>
     </section>

@@ -128,6 +128,46 @@ export function distanceKm(
 }
 
 /**
+ * Arah dari `a` ke `b` dalam derajat, 0 = utara, searah jarum jam.
+ *
+ * Bukan sekadar arctan selisih koordinat: garis bujur menyempit ke arah kutub,
+ * jadi selisih derajat bujur yang sama berarti jarak yang berbeda tergantung
+ * lintangnya. Untuk Balikpapan yang hampir persis di khatulistiwa selisihnya
+ * kecil — tapi tamu bisa saja membuka undangan ini dari mana pun.
+ */
+export function bearingDeg(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const φ1 = toRad(a.lat);
+  const φ2 = toRad(b.lat);
+  const Δλ = toRad(b.lng - a.lng);
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+const COMPASS = [
+  "Utara",
+  "Timur Laut",
+  "Timur",
+  "Tenggara",
+  "Selatan",
+  "Barat Daya",
+  "Barat",
+  "Barat Laut",
+];
+
+/** Nama arah delapan penjuru untuk sudut kompas. */
+export function compassLabel(deg: number) {
+  // Digeser setengah sektor sebelum dibagi, supaya "Utara" mencakup 337,5°–22,5°
+  // dan bukan 0°–45°. Tanpa pergeseran itu, arah tepat ke utara sekalipun bisa
+  // terbaca sebagai timur laut.
+  return COMPASS[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+}
+
+/**
  * Berkas kalender untuk tombol "Simpan ke kalender".
  * Dibuat di sisi klien sebagai blob, tanpa perlu memanggil server.
  */

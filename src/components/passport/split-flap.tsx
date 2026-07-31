@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useInView } from "@/components/motion/reveal";
 import { usePrefersReducedMotion } from "@/components/motion/use-reduced-motion";
+import { sfxFlap } from "@/lib/sfx";
 
 const CHARSET = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.·&-/";
 
@@ -66,6 +67,11 @@ export function SplitFlapText({
           return mod(c + 1, CHARSET.length);
         });
         setSpun([...cur]);
+        // Sekali per putaran papan, bukan sekali per sel: satu baris jadwal
+        // berisi puluhan sel, dan pembatas lajunya sudah dipasang di dalam
+        // sfxFlap. Yang terdengar tetap gemeretak, karena beberapa papan
+        // berputar berbarengan dan tiap klak digeser nada & kerasnya.
+        if (!settled) sfxFlap();
         if (settled && interval) clearInterval(interval);
       }, 45);
     }, delay);

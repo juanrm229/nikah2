@@ -15,6 +15,15 @@ export function Bismillah() {
       stamp={
         <Stamp top="DENGAN NAMA ALLAH" bottom="BISMILLAH" center="01" rotate={-13} size={104} />
       }
+      uvSeed={3}
+      // Doa yang tidak dicetak di permukaan. Tamu yang menemukan lampunya
+      // mendapat sesuatu yang tidak dibagikan ke semua orang — itulah seluruh
+      // maksudnya.
+      uv={
+        <p className="uv-glow absolute inset-x-8 bottom-[18%] text-center text-[0.72rem] leading-relaxed font-light text-[var(--color-uv-glow)]">
+          {wedding.uv.blessing}
+        </p>
+      }
     >
       <div className="flex flex-col items-center text-center">
         <TenunEmblem className="text-gold-3/70" size={64} />

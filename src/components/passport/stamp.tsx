@@ -1,7 +1,8 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useId } from "react";
 import { useInView } from "@/components/motion/reveal";
+import { sfxStamp } from "@/lib/sfx";
 
 /**
  * Stempel imigrasi.
@@ -43,6 +44,19 @@ export function Stamp({
   const [ref, inView] = useInView<HTMLDivElement>(0.5);
   const shown = active ?? inView;
   const uid = useId().replace(/:/g, "");
+
+  /**
+   * Debumnya dibunyikan pada jeda yang sama dengan jeda animasinya (60 ms),
+   * bukan pada saat `shown` berubah. Stempel yang terdengar mendarat sebelum
+   * terlihat mendarat terbaca sebagai suara milik benda LAIN — dan begitu
+   * telinga memutuskan itu, tidak ada takaran volume yang bisa memperbaikinya.
+   */
+  useEffect(() => {
+    if (!shown) return;
+    const id = window.setTimeout(sfxStamp, 60);
+    return () => window.clearTimeout(id);
+  }, [shown]);
+
   const arcTop = `arc-top-${uid}`;
   const arcBottom = `arc-bottom-${uid}`;
   const ink = `ink-${uid}`;

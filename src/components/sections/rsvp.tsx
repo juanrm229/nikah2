@@ -54,7 +54,7 @@ export function Rsvp({
   if (!liveEnabled) return null;
 
   return (
-    <PassportPage id="rsvp" label="Checkpoint Imigrasi" page="Hal. 06">
+    <PassportPage id="rsvp" label="Checkpoint Imigrasi" page="Hal. 06" uvSeed={23}>
       <Heading label="Konfirmasi Kehadiran" title="Pemeriksaan Dokumen" />
 
       <Reveal delay={80} className="relative mt-8">

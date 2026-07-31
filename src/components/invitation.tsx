@@ -13,13 +13,18 @@ import { Rsvp } from "@/components/sections/rsvp";
 import { Songs } from "@/components/sections/songs";
 import { Guestbook } from "@/components/sections/guestbook";
 import { PhotoWall } from "@/components/sections/photo-wall";
+import { Gift } from "@/components/sections/gift";
 import { Closing } from "@/components/sections/closing";
 import { MusicPlayer } from "@/components/music/player";
 import { ScrollProvider } from "@/components/motion/scroll-provider";
+import { UvLamp } from "@/components/uv/lamp";
+import { SfxToggle } from "@/components/sfx/toggle";
+import { SerialProvider } from "@/components/passport/serial";
 import { Dust } from "@/components/motion/dust";
 import { ScrollThread } from "@/components/motion/thread";
 import { IkatField } from "@/components/tenun/ikat";
 import { wedding } from "@/config/wedding";
+import { guestSerial } from "@/lib/wedding-mrz";
 import type { ActiveTrack } from "@/lib/music";
 import type { PublicGuest } from "@/lib/supabase/types";
 
@@ -53,6 +58,16 @@ export function Invitation({
   const [opened, setOpened] = useState(false);
 
   /**
+   * Nomor paspor tamu ini.
+   *
+   * Diturunkan dari slug, bukan dibawa dari server: slug-nya sudah ada di
+   * alamat yang dibuka tamu, jadi menghitungnya di peramban tidak
+   * menyeberangkan satu pun data tamu lain. Undangan umum tidak punya nomor
+   * pribadi — di sana yang berlaku nomor dokumen pernikahannya sendiri.
+   */
+  const serial = guest?.slug ? guestSerial(guest.slug) : undefined;
+
+  /**
    * Segel gulir selama sampul masih tertutup.
    *
    * Sampul adalah lapisan `fixed`, jadi ia sendiri tidak pernah bergerak — tapi
@@ -77,14 +92,27 @@ export function Invitation({
   }, [opened]);
 
   return (
-    <>
+    <SerialProvider value={serial}>
       <ScrollProvider enabled={opened} />
 
-      {!opened && <Cover guestName={guest?.name} onOpen={() => setOpened(true)} />}
+      {!opened && (
+        <Cover guestName={guest?.name} serial={serial} onOpen={() => setOpened(true)} />
+      )}
 
       {/* Baru dipasang setelah sampul dibuka — `play()` butuh gerakan pengguna,
           dan tekanan tombol sampul itulah gerakannya. */}
       {opened && wedding.music.enabled && track && <MusicPlayer track={track} />}
+
+      {/* Lampu UV baru dipasang setelah sampul dibuka, dan ia mendengarkan
+          SELURUH jendela — kalau dipasang lebih awal, menahan jari di sampul
+          yang masih tertutup akan memadamkan layar yang belum boleh dibaca.
+          Ditaruh di luar <main> karena sorotnya `fixed`. */}
+      {opened && <UvLamp />}
+
+      {/* Saklar suara. Baru muncul setelah sampul dibuka — sebelum itu belum
+          ada satu bunyi pun yang bisa dibisukan, dan tombol yang tidak
+          mengerjakan apa-apa hanya merusak layar pertama. */}
+      {opened && <SfxToggle />}
 
       {/* Selama sampul tertutup, isi undangan disembunyikan dari pembaca layar
           dan dari fokus keyboard agar tidak bisa "ditembus" dengan Tab. */}
@@ -130,6 +158,14 @@ export function Invitation({
         <Guestbook slug={guest?.slug ?? null} guestName={guest?.name} />
         <PhotoWall slug={guest?.slug ?? null} guestName={guest?.name} />
 
+        {/* Saklarnya ada di konfigurasi, dan pengujiannya ada DI SINI supaya
+            seluruh isi <Gift> tidak pernah ikut dirakit selama nomor rekening
+            yang sah belum masuk. Repo ini publik dan situsnya sudah live;
+            memajang rekening karangan ke tamu yang mungkin benar-benar
+            mentransfer adalah satu-satunya kesalahan di undangan ini yang tidak
+            bisa diperbaiki dengan deploy ulang. */}
+        {wedding.gift.enabled && <Gift />}
+
         <Closing />
 
         {/* Footer tinggal keterangan motif — ucapan penutupnya sudah pindah ke
@@ -140,6 +176,6 @@ export function Invitation({
           </p>
         </footer>
       </main>
-    </>
+    </SerialProvider>
   );
 }

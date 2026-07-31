@@ -64,7 +64,7 @@ export function Songs({
   const busy = state.status === "busy";
 
   return (
-    <PassportPage id="lagu" label="Hiburan Dalam Kabin" page="Hal. 07">
+    <PassportPage id="lagu" label="Hiburan Dalam Kabin" page="Hal. 07" uvSeed={31}>
       <Heading label="Permintaan Lagu" title="Daftar Putar Kabin" />
 
       <Reveal delay={80} className="mt-8">

@@ -33,6 +33,12 @@ export function Couple() {
           color="var(--color-stamp-red)"
         />
       }
+      uvSeed={5}
+      uv={
+        <p className="uv-glow absolute inset-x-6 bottom-[9%] text-center text-[0.8rem] tracking-[0.14em] text-[var(--color-uv-glow-2)]">
+          {wedding.uv.motto}
+        </p>
+      }
     >
       <Heading label="Assalamualaikum Wr. Wb." title="Kami yang berbahagia" />
 
