@@ -10,6 +10,7 @@ import { Dust } from "@/components/motion/dust";
 import { eventDateParts } from "@/lib/datetime";
 import { coupleMrz } from "@/lib/wedding-mrz";
 import { armSfx, sfxCover } from "@/lib/sfx";
+import { useEventClock } from "@/components/live/use-event-clock";
 
 const coverDate = eventDateParts(wedding.events[0].start);
 
@@ -93,6 +94,7 @@ export function Cover({
   // berbeda per tamu, dan digit pemeriksa di baris kedua ikut berubah
   // bersamanya.
   const mrz = useMemo(() => coupleMrz(serial), [serial]);
+  const clock = useEventClock();
 
   const cardRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -515,8 +517,22 @@ export function Cover({
                             menentukan, bukan zona perangkat tamu. Untuk acara
                             WITA pagi keduanya kebetulan sama, tapi menggeser jam
                             acara saja sudah cukup memundurkan tanggal. */}
-                          <p className="mrz mt-4 text-gold/55">
-                            {[coverDate.day, coverDate.month, coverDate.year].join(" · ")}
+                          {/* Pada hari acara, tanggal berhenti jadi kabar.
+                              Tamu yang membuka undangan di ruang tunggu tidak
+                              perlu diberi tahu tanggal berapa hari itu — ia
+                              perlu diberi tahu bahwa hari itu ADALAH hari itu.
+                              Ini satu-satunya perubahan pada sampul, dan
+                              satu-satunya yang dibutuhkan. */}
+                          <p
+                            className={`mrz mt-4 ${
+                              clock?.phase === "berlangsung"
+                                ? "text-gold-2"
+                                : "text-gold/55"
+                            }`}
+                          >
+                            {clock?.phase === "berlangsung"
+                              ? "HARI INI"
+                              : [coverDate.day, coverDate.month, coverDate.year].join(" · ")}
                           </p>
                         </div>
                       </div>

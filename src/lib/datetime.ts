@@ -89,6 +89,53 @@ export function zoneLabel(iso: string) {
   return { 7: "WIB", 8: "WITA", 9: "WIT" }[off / 60] ?? "";
 }
 
+/**
+ * Babak acara. Undangan yang dibuka sebulan sebelum hari-H dan undangan yang
+ * dibuka saat resepsi berlangsung tidak boleh jadi benda yang sama.
+ */
+export type EventPhase = "jauh" | "menjelang" | "berlangsung" | "usai";
+
+/**
+ * Babak yang sedang berlaku.
+ *
+ * Dibandingkan sebagai timestamp mutlak, bukan sebagai waktu dinding: string
+ * acara sudah membawa offsetnya sendiri, jadi tamu di Jakarta dan tamu di
+ * Balikpapan berpindah babak pada DETIK yang sama — bukan pada jam yang sama
+ * menurut ponsel masing-masing.
+ */
+export function eventPhase(
+  startIso: string,
+  endIso: string,
+  now = Date.now(),
+): EventPhase {
+  const start = new Date(startIso).getTime();
+  if (now >= new Date(endIso).getTime()) return "usai";
+  if (now >= start) return "berlangsung";
+  // Sehari penuh, bukan "tanggalnya sama": tamu yang membuka undangan pukul
+  // sebelas malam sebelum akad pagi memang sudah berada di malam sebelum
+  // keberangkatan, dan papan yang masih menulis "terjadwal" mengingkari itu.
+  if (start - now <= 86_400_000) return "menjelang";
+  return "jauh";
+}
+
+/**
+ * Menit sejak tengah malam menurut waktu dinding DI LOKASI ACARA.
+ *
+ * Dipakai mencocokkan jam pada susunan acara — "11:00" di sana berarti pukul
+ * sebelas di Balikpapan, bukan pukul sebelas di tempat tamu membuka undangan.
+ */
+export function minutesAtEventZone(zoneSource: string, now = Date.now()) {
+  const off = offsetMinutes(zoneSource) ?? 420;
+  const d = new Date(now + off * 60_000);
+  return d.getUTCHours() * 60 + d.getUTCMinutes();
+}
+
+/** "HH:MM" jadi menit sejak tengah malam. */
+export function hhmmToMinutes(text: string) {
+  const [h, m] = text.split(":");
+  return Number(h) * 60 + Number(m ?? 0);
+}
+
 export type Countdown = {
   days: number;
   hours: number;

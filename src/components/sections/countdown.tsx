@@ -5,6 +5,7 @@ import { MAIN_DATE, wedding } from "@/config/wedding";
 import { countdownTo, formatDateLong, type Countdown } from "@/lib/datetime";
 import { Heading } from "@/components/passport/page";
 import { Reveal } from "@/components/motion/reveal";
+import { useEventClock } from "@/components/live/use-event-clock";
 
 /**
  * Hitung mundur menuju akad.
@@ -15,6 +16,7 @@ import { Reveal } from "@/components/motion/reveal";
  */
 export function CountdownSection() {
   const [time, setTime] = useState<Countdown | null>(null);
+  const clock = useEventClock();
 
   useEffect(() => {
     const update = () => setTime(countdownTo(MAIN_DATE));
@@ -61,10 +63,17 @@ export function CountdownSection() {
           </div>
         </Reveal>
 
-        {time?.passed && (
+        {/* Kalimat penutup ikut babaknya, bukan cuma "sudah lewat atau belum".
+            Undangan yang masih menulis "hari ini kami menikah" pada pekan
+            berikutnya berhenti terasa seperti dokumen yang hidup. */}
+        {clock && clock.phase !== "jauh" && (
           <Reveal delay={80}>
             <p className="display mt-8 text-xl text-gold-2">
-              Hari ini kami menikah. Terima kasih sudah datang.
+              {clock.phase === "berlangsung"
+                ? "Hari ini kami menikah. Terima kasih sudah datang."
+                : clock.phase === "usai"
+                  ? "Terima kasih sudah menjadi bagian dari hari itu."
+                  : "Besok. Sampai berjumpa di sana."}
             </p>
           </Reveal>
         )}
