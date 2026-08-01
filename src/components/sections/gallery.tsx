@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { wedding } from "@/config/wedding";
 import { Heading } from "@/components/passport/page";
@@ -18,10 +18,52 @@ import { useParallax } from "@/components/motion/parallax";
  * satu nada dengan tenun hitam-putih, tapi itu mengorbankan hal yang justru
  * paling ingin dilihat tamu.
  */
+/** Berapa lama jari harus menempel sebelum fotonya mulai dicuci ulang. */
+const HOLD_MS = 420;
+/** Sama dengan durasi `animate-polaroid-wash` di globals.css. */
+const WASH_MS = 2400;
+
 export function Gallery() {
   const [active, setActive] = useState<number | null>(null);
   const photos = wedding.gallery;
   const gridRef = useParallax<HTMLDivElement>(30);
+
+  /**
+   * Foto yang sedang dicuci ulang. `key` ikut disimpan supaya menahan foto
+   * yang sama dua kali benar-benar mengulang animasinya dari awal.
+   */
+  const [wash, setWash] = useState<{ index: number; key: number } | null>(null);
+  const holdTimer = useRef<number | undefined>(undefined);
+  const washTimer = useRef<number | undefined>(undefined);
+  /**
+   * Menandai bahwa sentuhan barusan sudah berubah jadi tahanan. Tanpa ini,
+   * melepas jari akan MEMBUKA lightbox tepat di atas foto yang baru saja mulai
+   * dicuci — dua kejutan bertabrakan, dan yang terlihat tamu cuma yang salah.
+   */
+  const held = useRef(false);
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(holdTimer.current);
+      window.clearTimeout(washTimer.current);
+    },
+    [],
+  );
+
+  function onHoldStart(index: number) {
+    held.current = false;
+    window.clearTimeout(holdTimer.current);
+    holdTimer.current = window.setTimeout(() => {
+      held.current = true;
+      setWash({ index, key: Date.now() });
+      window.clearTimeout(washTimer.current);
+      washTimer.current = window.setTimeout(() => setWash(null), WASH_MS + 80);
+    }, HOLD_MS);
+  }
+
+  function onHoldEnd() {
+    window.clearTimeout(holdTimer.current);
+  }
 
   const close = useCallback(() => setActive(null), []);
 
@@ -66,8 +108,21 @@ export function Gallery() {
             >
               <button
                 type="button"
-                onClick={() => setActive(i)}
-                className="group relative block w-full overflow-hidden border border-paper/12"
+                onClick={() => {
+                  if (held.current) {
+                    held.current = false;
+                    return;
+                  }
+                  setActive(i);
+                }}
+                onPointerDown={() => onHoldStart(i)}
+                onPointerUp={onHoldEnd}
+                onPointerLeave={onHoldEnd}
+                onPointerCancel={onHoldEnd}
+                // Menahan gambar di ponsel memanggil menu "Simpan Gambar", dan
+                // menu itu muncul TEPAT saat kejutannya mulai jalan.
+                onContextMenu={(e) => e.preventDefault()}
+                className="group relative block w-full touch-manipulation overflow-hidden border border-paper/12 select-none [-webkit-touch-callout:none]"
                 aria-label={`Perbesar foto ${i + 1}`}
               >
                 <span
@@ -87,12 +142,15 @@ export function Gallery() {
                     style={{ transform: "translate3d(0, var(--py, 0px), 0)" }}
                   >
                     <Image
+                      key={wash?.index === i ? wash.key : "diam"}
                       src={photo.src}
                       alt=""
                       fill
                       sizes="(max-width: 448px) 50vw, 224px"
                       style={{ objectPosition: photo.focus }}
-                      className="scale-[1.12] object-cover transition-transform duration-700 group-hover:scale-[1.18]"
+                      className={`scale-[1.12] object-cover transition-transform duration-700 group-hover:scale-[1.18] ${
+                        wash?.index === i ? "animate-polaroid-wash" : ""
+                      }`}
                     />
                   </span>
                 </span>
