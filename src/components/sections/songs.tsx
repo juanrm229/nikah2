@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PassportPage, Heading } from "@/components/passport/page";
 import { Reveal } from "@/components/motion/reveal";
 import { submitSong, type SentSong } from "@/lib/actions/songs";
@@ -37,6 +37,25 @@ export function Songs({
   const [state, setState] = useState<State>({ status: "idle" });
   const [sent, setSent] = useState<SentSong[]>([]);
 
+  /**
+   * Slip yang sedang terlepas dari bonggolnya.
+   *
+   * Yang disobek adalah SALINAN, bukan formnya sendiri. Tamu boleh menitipkan
+   * beberapa lagu, jadi form yang ikut terbang akan langsung harus dikembalikan
+   * lagi sedetik kemudian — dan kertas yang disobek lalu dipasang ulang di
+   * tempat yang sama bukan kertas yang disobek, melainkan kertas yang berkedip.
+   *
+   * `key` ikut disimpan supaya dua kiriman beruntun benar-benar memulai
+   * animasinya dari awal; tanpa itu React memakai ulang elemen yang sama dan
+   * sobekan kedua tidak pernah terlihat.
+   */
+  const [tearing, setTearing] = useState<{ key: number; title: string } | null>(null);
+  const tearTimer = useRef<number | undefined>(undefined);
+
+  // Kalau tamu meninggalkan halaman selagi slipnya masih melayang, jangan
+  // tinggalkan timer yang menembak setState ke komponen yang sudah tidak ada.
+  useEffect(() => () => window.clearTimeout(tearTimer.current), []);
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -50,6 +69,12 @@ export function Songs({
 
     setState({ status: "ok" });
     setSent((prev) => [...prev, result.song]);
+
+    // Sobekannya dilepas SEBELUM kolomnya dikosongkan, supaya judul yang
+    // tertulis di slip yang melayang masih judul yang barusan dikirim.
+    setTearing({ key: Date.now(), title: result.song.title });
+    window.clearTimeout(tearTimer.current);
+    tearTimer.current = window.setTimeout(() => setTearing(null), 760);
 
     // Judul & penyanyi dikosongkan, tapi nama pengirim dibiarkan — tamu yang
     // request tiga lagu tidak perlu menulis namanya tiga kali.
@@ -91,6 +116,21 @@ export function Songs({
             <label htmlFor="song-hp">Alamat web</label>
             <input id="song-hp" name={HONEYPOT} type="text" tabIndex={-1} autoComplete="off" />
           </div>
+
+          {/* Salinan yang terlepas dan jatuh menyusul ke daftar putar.
+              `pointer-events-none` supaya ia tidak pernah menghalangi tamu yang
+              langsung mengetik judul berikutnya selagi slipnya masih melayang. */}
+          {tearing && (
+            <span
+              key={tearing.key}
+              aria-hidden
+              className="animate-slip-tear torn-top pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-center border border-ink/25 border-t-0 bg-paper-2 px-4 py-6 shadow-[0_18px_30px_-18px_rgba(0,0,0,0.6)]"
+            >
+              <span className="truncate text-[0.9rem] font-light text-ink">
+                {tearing.title}
+              </span>
+            </span>
+          )}
 
           <div className="flex items-baseline justify-between border-b border-ink/20 pb-2">
             <span className="field-label text-ink-soft">Permintaan Lagu</span>
