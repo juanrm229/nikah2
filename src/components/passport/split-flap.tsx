@@ -20,12 +20,23 @@ const mod = (n: number, m: number) => ((n % m) + m) % m;
 export function SplitFlapText({
   text,
   delay = 0,
+  replay = 0,
   className = "",
   cellClassName = "",
 }: {
   text: string;
   /** Jeda sebelum papan mulai berputar, untuk efek beruntun antar baris. */
   delay?: number;
+  /**
+   * Naikkan angkanya untuk memutar ulang papan yang sudah terlanjur berhenti.
+   * Dipakai susunan acara: baris yang disentuh membalik daunnya sekali lagi.
+   *
+   * Pemutaran ulang selalu berangkat SEKETIKA, mengabaikan `delay`. Jeda
+   * beruntun itu untuk papan yang baru masuk layar — kalau ikut dipakai di
+   * sini, baris kelima akan diam 800 md setelah disentuh dan sentuhannya
+   * terbaca tidak nyampai.
+   */
+  replay?: number;
   className?: string;
   cellClassName?: string;
 }) {
@@ -74,13 +85,13 @@ export function SplitFlapText({
         if (!settled) sfxFlap();
         if (settled && interval) clearInterval(interval);
       }, 45);
-    }, delay);
+    }, replay > 0 ? 0 : delay);
 
     return () => {
       clearTimeout(timeout);
       if (interval) clearInterval(interval);
     };
-  }, [inView, reduced, targets, delay]);
+  }, [inView, reduced, targets, delay, replay]);
 
   return (
     <span ref={ref} className={`inline-flex gap-[2px] ${className}`} aria-label={text}>

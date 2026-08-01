@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { wedding } from "@/config/wedding";
 import { Heading } from "@/components/passport/page";
 import { SplitFlapText } from "@/components/passport/split-flap";
@@ -39,6 +40,17 @@ function footnote(phase?: string) {
  */
 export function Rundown() {
   const clock = useEventClock();
+  /**
+   * Berapa kali tiap baris sudah disentuh. Angkanya diteruskan ke papan
+   * split-flap sebagai `replay`, dan tiap kenaikan membuat daunnya berputar
+   * ulang dari awal.
+   *
+   * Disimpan per baris, bukan satu angka untuk seluruh papan: papan bandara
+   * sungguhan tidak pernah membalik seluruh isinya sekaligus, dan baris yang
+   * ikut-ikutan berbunyi saat tetangganya disentuh akan terbaca sebagai
+   * papan yang ngadat, bukan papan yang menjawab.
+   */
+  const [flips, setFlips] = useState<Record<number, number>>({});
   const live = clock?.phase === "berlangsung";
   // Baris hanya disorot selama acara benar-benar berjalan. Di luar hari itu,
   // "pukul 11.00" pada jam dinding mana pun tidak berarti apa-apa — papan yang
@@ -92,7 +104,7 @@ export function Rundown() {
                 return (
                   <li
                     key={row.time + row.label}
-                    className={`relative flex items-center gap-3 border-b border-paper/8 px-4 py-3.5 transition-[background-color,opacity] duration-700 last:border-b-0 ${
+                    className={`relative border-b border-paper/8 transition-[background-color,opacity] duration-700 last:border-b-0 ${
                       isNow ? "bg-gold/10" : ""
                     } ${done ? "opacity-45" : ""}`}
                   >
@@ -102,31 +114,44 @@ export function Rundown() {
                     {isNow && (
                       <span
                         aria-hidden
-                        className="absolute inset-y-0 left-0 w-[3px] bg-gold shadow-[0_0_14px_0_var(--color-gold)]"
+                        className="absolute inset-y-0 left-0 z-10 w-[3px] bg-gold shadow-[0_0_14px_0_var(--color-gold)]"
                       />
                     )}
 
-                    <SplitFlapText
-                      text={row.time}
-                      delay={i * 160}
-                      className="shrink-0 text-[1.05rem]"
-                    />
-
-                    <div className="min-w-0 flex-1 text-right">
-                      <p
-                        className={`truncate text-[0.9rem] font-light ${
-                          isNow ? "text-gold-2" : "text-paper"
-                        }`}
-                      >
-                        {row.label}
-                      </p>
+                    {/* Seluruh baris jadi satu tombol supaya jempol yang
+                        mengarah ke mana pun di baris itu tetap kena. Di luar
+                        urutan Tab: isinya sudah terbaca lengkap sebagai teks,
+                        membalik daunnya tidak menambah satu pun keterangan. */}
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setFlips((f) => ({ ...f, [i]: (f[i] ?? 0) + 1 }))}
+                      className="flex w-full cursor-default items-center gap-3 bg-transparent px-4 py-3.5 text-left"
+                    >
                       <SplitFlapText
-                        text={isNow ? "SEKARANG" : row.sub}
-                        delay={i * 160 + 220}
-                        className="mt-1 justify-end text-[0.52rem] opacity-70"
-                        cellClassName={isNow ? "bg-gold/30 text-gold-2" : "bg-ink-3/60"}
+                        text={row.time}
+                        delay={i * 160}
+                        replay={flips[i] ?? 0}
+                        className="shrink-0 text-[1.05rem]"
                       />
-                    </div>
+
+                      <div className="min-w-0 flex-1 text-right">
+                        <p
+                          className={`truncate text-[0.9rem] font-light ${
+                            isNow ? "text-gold-2" : "text-paper"
+                          }`}
+                        >
+                          {row.label}
+                        </p>
+                        <SplitFlapText
+                          text={isNow ? "SEKARANG" : row.sub}
+                          delay={i * 160 + 220}
+                          replay={flips[i] ?? 0}
+                          className="mt-1 justify-end text-[0.52rem] opacity-70"
+                          cellClassName={isNow ? "bg-gold/30 text-gold-2" : "bg-ink-3/60"}
+                        />
+                      </div>
+                    </button>
                   </li>
                 );
               })}
