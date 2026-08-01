@@ -3,6 +3,8 @@
 import { useActionState, useState } from "react";
 import { PassportPage, Heading } from "@/components/passport/page";
 import { Stamp } from "@/components/passport/stamp";
+import { useSerial } from "@/components/passport/serial";
+import { stampTraits } from "@/lib/stamp";
 import { Reveal } from "@/components/motion/reveal";
 import { submitRsvp, type RsvpResult } from "@/lib/actions/rsvp";
 import { liveEnabled } from "@/lib/supabase/client";
@@ -49,6 +51,25 @@ export function Rsvp({
   const ok = result.status === "ok";
   const declined = ok && result.attending === "tidak";
 
+  /**
+   * Cap milik tamu ini.
+   *
+   * Sudut miring dan belang tintanya dihitung dari nomor paspornya sendiri,
+   * jadi cap yang dibubuhkan untuk satu tamu tidak pernah sama dengan cap tamu
+   * lain — dan selalu sama setiap kali ia membuka undangannya. Jalur hijau dan
+   * jalur merah dipisahkan lewat `variant`, supaya tamu yang mengubah
+   * jawabannya melihat cap yang benar-benar berbeda, bukan cap yang sama
+   * berganti warna.
+   *
+   * Jalur merah dimiringkan ke arah berlawanan: dua cap yang miring ke sisi
+   * yang sama di satu halaman terbaca sebagai satu cap yang dicetak dua kali.
+   */
+  const serial = useSerial();
+  const traits = stampTraits(serial, {
+    base: declined ? 11 : -9,
+    variant: declined ? 1 : 0,
+  });
+
   // Tanpa env Supabase, Server Action-nya pasti gagal. Lebih baik section ini
   // tidak ada sama sekali daripada memajang form yang menolak setiap kiriman.
   if (!liveEnabled) return null;
@@ -68,7 +89,10 @@ export function Rsvp({
             bottom={declined ? "TERIMA KASIH" : "SELAMAT DATANG"}
             center={declined ? "NOTED" : "APPROVED"}
             color={declined ? "var(--color-stamp-red)" : "var(--color-stamp)"}
-            rotate={declined ? 11 : -9}
+            rotate={traits.rotate}
+            seed={traits.seed}
+            serial={serial}
+            haptic
             size={124}
           />
         </div>

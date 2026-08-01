@@ -2,7 +2,18 @@
 
 import { useEffect, useId } from "react";
 import { useInView } from "@/components/motion/reveal";
+import { usePrefersReducedMotion } from "@/components/motion/use-reduced-motion";
 import { sfxStamp } from "@/lib/sfx";
+
+/**
+ * Saat karet stempel menyentuh kertas, dalam milidetik sejak animasinya mulai.
+ *
+ * Angkanya bukan pilihan bebas: 48% dari 560 md, yaitu keyframe `stamp-press`
+ * tempat bentuknya menggepeng. Bunyi, getar, dan cincin benturan ketiganya
+ * memakai angka ini — kalau salah satu bergeser, yang terdengar atau terasa
+ * bukan lagi milik benturan yang sedang dilihat.
+ */
+const IMPACT_MS = 268;
 
 /**
  * Stempel imigrasi.
@@ -23,6 +34,9 @@ export function Stamp({
   color = "var(--color-stamp)",
   className = "",
   active,
+  seed = 7,
+  serial,
+  haptic = false,
 }: {
   /** Teks melengkung di busur atas. */
   top: string;
@@ -40,22 +54,45 @@ export function Stamp({
    * jadi true; dipakai checkpoint RSVP yang mengecap setelah tamu mengirim.
    */
   active?: boolean;
+  /** Benih belang tinta. Lihat `stampTraits` — diturunkan dari nomor tamu. */
+  seed?: number;
+  /** Nomor kecil di kaki cap, seperti nomor petugas pada cap imigrasi asli. */
+  serial?: string;
+  /**
+   * Getar singkat saat membentur. Sengaja TIDAK menyala dengan sendirinya:
+   * stempel bawaan dibubuhkan oleh gulir, dan ponsel yang bergetar tiap kali
+   * tamu melewati satu halaman bukan kejutan, melainkan gangguan. Hanya cap
+   * yang benar-benar diminta tamu — kiriman RSVP — yang pantas terasa.
+   */
+  haptic?: boolean;
 }) {
   const [ref, inView] = useInView<HTMLDivElement>(0.5);
   const shown = active ?? inView;
   const uid = useId().replace(/:/g, "");
+  const reduced = usePrefersReducedMotion();
 
   /**
-   * Debumnya dibunyikan pada jeda yang sama dengan jeda animasinya (60 ms),
-   * bukan pada saat `shown` berubah. Stempel yang terdengar mendarat sebelum
-   * terlihat mendarat terbaca sebagai suara milik benda LAIN — dan begitu
-   * telinga memutuskan itu, tidak ada takaran volume yang bisa memperbaikinya.
+   * Bunyi & getar dibunyikan pada saat MEMBENTUR, bukan di awal animasinya.
+   *
+   * Sebelumnya keduanya dijadwalkan pada 60 md dengan alasan "sama dengan jeda
+   * animasinya" — tapi 60 md itu jeda MULAI-nya, bukan saat mendaratnya:
+   * transformnya masih berjalan 460 md sesudah itu dan baru menyentuh ukuran
+   * akhir sekitar 253 md. Jadi selama ini debumnya terdengar hampir dua ratus
+   * milidetik sebelum stempelnya kelihatan mendarat. Persis kesalahan yang
+   * diperingatkan komentar lamanya sendiri.
    */
   useEffect(() => {
     if (!shown) return;
-    const id = window.setTimeout(sfxStamp, 60);
+    const id = window.setTimeout(() => {
+      sfxStamp();
+      // Getar hanya kalau memang diminta, perangkatnya mendukung, dan tamu
+      // tidak sedang meminta gerak dikurangi.
+      if (haptic && !reduced && typeof navigator.vibrate === "function") {
+        navigator.vibrate(18);
+      }
+    }, IMPACT_MS);
     return () => window.clearTimeout(id);
-  }, [shown]);
+  }, [shown, haptic, reduced]);
 
   const arcTop = `arc-top-${uid}`;
   const arcBottom = `arc-bottom-${uid}`;
@@ -64,20 +101,33 @@ export function Stamp({
   return (
     <div
       ref={ref}
-      className={`pointer-events-none select-none ${className}`}
-      style={{
-        width: size,
-        height: size,
-        opacity: shown ? 0.82 : 0,
-        transform: shown
-          ? `rotate(${rotate}deg) scale(1)`
-          : `rotate(${rotate - 8}deg) scale(1.7)`,
-        // Kurva dengan overshoot: inilah yang bikin terasa "dicap", bukan "muncul".
-        transition:
-          "opacity 220ms ease-out 60ms, transform 460ms cubic-bezier(0.2,1.5,0.4,1) 60ms",
-      }}
+      className={`pointer-events-none relative select-none ${
+        shown ? "animate-stamp-press" : ""
+      } ${className}`}
+      style={
+        {
+          width: size,
+          height: size,
+          "--stamp-rot": `${rotate}deg`,
+          // Sebelum dibubuhkan ia tidak ada sama sekali. Keadaan awal tidak
+          // ditulis sebagai transform di sini melainkan di keyframe 0% —
+          // kalau ditulis di dua tempat, keduanya akan berselisih setiap kali
+          // salah satunya diubah.
+          opacity: shown ? undefined : 0,
+        } as React.CSSProperties
+      }
       aria-hidden
     >
+      {/* Hentakan benturan. Dirender hanya saat dibubuhkan supaya animasinya
+          benar-benar mulai dari awal — elemen yang sudah ada sejak semula akan
+          menghabiskan animasinya sebelum stempelnya sempat turun. */}
+      {shown && (
+        <span
+          className="animate-stamp-impact absolute inset-0 rounded-full border"
+          style={{ borderColor: color }}
+        />
+      )}
+
       <svg viewBox="0 0 140 140" width="100%" height="100%" fill="none">
         <defs>
           <path id={arcTop} d="M 70 70 m -50 0 a 50 50 0 1 1 100 0" />
@@ -85,7 +135,12 @@ export function Stamp({
 
           {/* Tinta belang: turbulensi memakan sebagian bentuk agar tidak rata */}
           <filter id={ink} x="-15%" y="-15%" width="130%" height="130%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" seed="7" />
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.75"
+              numOctaves="4"
+              seed={seed}
+            />
             <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.1 0.85" />
             <feComposite in="SourceGraphic" operator="in" />
           </filter>
@@ -135,6 +190,26 @@ export function Stamp({
               stroke="none"
             >
               {center}
+            </text>
+          )}
+
+          {/* Nomor petugas. Pada cap imigrasi sungguhan inilah satu-satunya
+              bagian yang berbeda antar-penumpang, dan di sini pun begitu:
+              nomor paspor tamu yang membuka undangan ini. Sengaja kecil dan
+              nyaris tak terbaca — ia ada untuk DITEMUKAN, bukan untuk dibaca
+              sekilas. */}
+          {serial && (
+            <text
+              x="70"
+              y="99"
+              fontSize="6"
+              letterSpacing="1.4"
+              fontFamily="var(--font-mono)"
+              textAnchor="middle"
+              stroke="none"
+              opacity={0.75}
+            >
+              {serial}
             </text>
           )}
         </g>
