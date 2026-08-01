@@ -2,7 +2,7 @@ import { wedding } from "@/config/wedding";
 import { PassportPage } from "@/components/passport/page";
 import { Stamp } from "@/components/passport/stamp";
 import { Reveal } from "@/components/motion/reveal";
-import { TenunEmblem } from "@/components/tenun/emblem";
+import { TenunEmblemTap } from "@/components/tenun/emblem-tap";
 
 /** Halaman pembuka — ayat, sebelum tamu berkenalan dengan mempelai. */
 export function Bismillah() {
@@ -26,7 +26,7 @@ export function Bismillah() {
       }
     >
       <div className="flex flex-col items-center text-center">
-        <TenunEmblem className="text-gold-3/70" size={64} />
+        <TenunEmblemTap className="text-gold-3/70" size={64} />
 
         <Reveal delay={120}>
           <p className="mt-7 font-arabic text-2xl leading-loose text-ink">

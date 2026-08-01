@@ -91,13 +91,20 @@ export function TenunEmblem({
         {/* Tumpal memancar */}
         {spokes.map((p, i) => (
           <g key={i} transform={`rotate(${p.deg} 60 60)`}>
-            <path
-              d="M60 18 L67 32 L60 27 L53 32 Z"
-              fill={color}
-              stroke="none"
-              style={seed(760 + i * 55)}
-            />
-            <path d="M60 34 L60 44" strokeWidth={0.9} style={line(LEN.stem, 700 + i * 55)} />
+            {/* Lapisan kedua yang kelihatannya berlebihan ini yang membuat
+                tumpalnya bisa mekar: transform CSS akan MENIMPA atribut
+                `transform` di atas, jadi rotasinya harus tinggal di elemen
+                yang berbeda dari yang digeser. `--spoke` cuma nomor urut,
+                dipakai globals.css untuk menjalarkan mekarnya melingkar. */}
+            <g className="emblem-spoke" style={{ ["--spoke" as string]: i }}>
+              <path
+                d="M60 18 L67 32 L60 27 L53 32 Z"
+                fill={color}
+                stroke="none"
+                style={seed(760 + i * 55)}
+              />
+              <path d="M60 34 L60 44" strokeWidth={0.9} style={line(LEN.stem, 700 + i * 55)} />
+            </g>
           </g>
         ))}
 

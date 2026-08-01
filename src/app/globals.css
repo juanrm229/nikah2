@@ -614,6 +614,48 @@ html.lenis body {
   animation: slip-tear 720ms cubic-bezier(0.4, 0.05, 0.35, 1) both;
 }
 
+/* ── Lambang yang membalas kalau disentuh ────────────────────────────────────
+   Satu putaran penuh, dan di tengah putaran kedelapan tumpalnya mekar keluar.
+
+   Pelambatannya ditaruh di UJUNG, bukan di kedua ujung: lambang yang berangkat
+   pelan terbaca sebagai lambang yang sedang memuat sesuatu, sedangkan yang
+   berangkat cepat lalu mendarat pelan terbaca sebagai benda yang DIPUTAR oleh
+   jari lalu berhenti sendiri.
+
+   Mekarnya cuma tujuh satuan viewBox (±6% lebar lambang). Lebih dari itu dan
+   medalinya terbaca patah, bukan bernapas. */
+@keyframes emblem-turn {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Tumpalnya digeser di dalam <g> yang SUDAH dirotasi, jadi translateY di sini
+   selalu berarti "menjauh dari pusat" ke arah tumpal itu sendiri — tidak perlu
+   menghitung sudut satu per satu. */
+@keyframes emblem-bloom {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  42% {
+    transform: translateY(-7px);
+  }
+}
+
+@utility animate-emblem-turn {
+  animation: emblem-turn 1400ms cubic-bezier(0.12, 0.66, 0.2, 1) both;
+}
+
+.animate-emblem-turn .emblem-spoke {
+  /* Tumpal terjauh berangkat 210 md setelah yang pertama, jadi mekarnya
+     menjalar melingkar mengikuti arah putaran, bukan meletus serentak. */
+  animation: emblem-bloom 1000ms cubic-bezier(0.34, 1.2, 0.5, 1) calc(var(--spoke, 0) * 30ms) both;
+}
+
 /* ── Cap yang dibanting ──────────────────────────────────────────────────────
    Empat babak, dan urutannya yang menentukan apakah ini terbaca sebagai
    "dicap" atau cuma "muncul":
