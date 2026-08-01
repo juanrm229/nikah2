@@ -14,6 +14,48 @@ import { usePrefersReducedMotion } from "@/components/motion/use-reduced-motion"
  * menyusuri garis itu mengikuti posisi scroll — bukan animasi yang berjalan
  * sendiri — sehingga tamu merasa merekalah yang menerbangkannya.
  */
+const MONTHS = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
+
+/**
+ * Tanggal persinggahan disimpan sebagai kalimat ("22 Maret 2026"), bukan ISO,
+ * karena itulah yang dicetak di halaman. Jadi lama transit dihitung dengan
+ * membaca ulang kalimat itu.
+ *
+ * Mengembalikan `null` kalau bentuknya tidak dikenali — dan yang memanggilnya
+ * lalu menyembunyikan baris lama transit. Undangan yang menampilkan
+ * "NaN HARI" jauh lebih buruk daripada undangan yang diam soal itu.
+ */
+function parseIndoDate(text: string) {
+  const m = /^(\d{1,2})\s+(\S+)\s+(\d{4})$/.exec(text.trim());
+  if (!m) return null;
+  const month = MONTHS.indexOf(m[2]);
+  if (month < 0) return null;
+  return Date.UTC(Number(m[3]), month, Number(m[1]));
+}
+
+function daysBetween(from: string, to: string) {
+  const a = parseIndoDate(from);
+  const b = parseIndoDate(to);
+  if (a === null || b === null) return null;
+  return Math.round((b - a) / 86_400_000);
+}
+
+/** Berapa lama detail persinggahan bertahan terbuka sebelum menutup sendiri. */
+const DETAIL_MS = 6000;
+
 export function Journey() {
   const stops = wedding.story;
   const sectionRef = useRef<HTMLElement>(null);
@@ -22,6 +64,27 @@ export function Journey() {
   const clipRef = useRef<SVGRectElement>(null);
   const reduced = usePrefersReducedMotion();
   const [flownIndex, setFlownIndex] = useState(-1);
+
+  /**
+   * Persinggahan yang detailnya sedang terbuka. Slipnya menutupi cerita di
+   * sebelahnya, jadi ia menutup sendiri setelah beberapa detik — tamu yang
+   * menyentuhnya karena penasaran tidak boleh terjebak menatap panel yang
+   * tidak jelas cara menutupnya.
+   */
+  const [openStop, setOpenStop] = useState<number | null>(null);
+  const detailTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(detailTimer.current), []);
+
+  function toggleStop(index: number) {
+    window.clearTimeout(detailTimer.current);
+    if (openStop === index) {
+      setOpenStop(null);
+      return;
+    }
+    setOpenStop(index);
+    detailTimer.current = window.setTimeout(() => setOpenStop(null), DETAIL_MS);
+  }
 
   // Tanpa animasi, seluruh rute langsung dianggap sudah dilewati.
   const reachedIndex = reduced ? stops.length - 1 : flownIndex;
@@ -188,7 +251,7 @@ export function Journey() {
             {stops.map((stop, i) => (
               <li
                 key={stop.code + stop.date}
-                className="flex items-center gap-4"
+                className="relative flex items-center gap-4"
                 style={{ height: GAP }}
               >
                 {/* Kode persinggahan, menyala saat pesawat melewatinya.
@@ -198,15 +261,54 @@ export function Journey() {
                   className="flex shrink-0 justify-center"
                   style={{ width: RAIL }}
                 >
-                  <span
-                    className={`mrz rounded-[2px] border px-2 py-1 text-[0.6rem] transition-colors duration-500 ${
+                  {/* Kodenya sendiri yang jadi tombolnya, bukan kotak sentuh
+                      yang lebih besar di sekelilingnya: yang dicari tamu yang
+                      iseng adalah kode itu, dan jangkauan yang melebar diam-diam
+                      cuma membuat sentuhan nyasar terbaca sebagai kejutan yang
+                      muncul sendiri. */}
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => toggleStop(i)}
+                    className={`mrz cursor-default rounded-[2px] border px-2 py-1 text-[0.6rem] transition-colors duration-500 ${
                       i <= reachedIndex
                         ? "border-gold/60 bg-gold/15 text-gold-2 shadow-[0_0_18px_-4px_var(--color-gold)]"
                         : "border-paper/15 bg-ink-2 text-paper-dim/60"
                     }`}
                   >
                     {stop.code}
-                  </span>
+                  </button>
+                </div>
+
+                {/* Slip keterangan ruas, terbuka di atas ceritanya sendiri.
+                    Tingginya baris ini terkunci di GAP supaya geometri jalur
+                    penerbangan tetap benar — jadi slipnya tidak boleh mendorong
+                    apa pun, ia harus melayang. */}
+                <div
+                  aria-hidden
+                  className={`pointer-events-none absolute inset-y-3 right-0 z-10 flex items-center transition-[opacity,transform] duration-300 ease-out ${
+                    openStop === i
+                      ? "translate-x-0 opacity-100"
+                      : "-translate-x-2 opacity-0"
+                  }`}
+                  style={{ left: RAIL + 16 }}
+                >
+                  <div className="w-full rounded-[2px] border border-gold/25 bg-ink-2/97 px-3 py-2.5 shadow-[0_16px_34px_-16px_rgba(0,0,0,0.95)] backdrop-blur-[2px]">
+                    <p className="mrz text-[0.62rem] text-gold-2">
+                      {i === 0 ? "TITIK BERANGKAT" : `${stops[i - 1].code} → ${stop.code}`}
+                    </p>
+                    {i > 0 && (() => {
+                      const days = daysBetween(stops[i - 1].date, stop.date);
+                      return days === null ? null : (
+                        <p className="mrz mt-1.5 text-[0.55rem] text-paper-dim">
+                          LAMA TRANSIT · {days} HARI
+                        </p>
+                      );
+                    })()}
+                    <p className="mrz mt-1.5 text-[0.5rem] text-paper-dim/60">
+                      {i === 0 ? stop.date : `${stops[i - 1].date} — ${stop.date}`}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="min-w-0 flex-1">
