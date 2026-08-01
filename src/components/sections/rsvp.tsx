@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { PassportPage, Heading } from "@/components/passport/page";
 import { Stamp } from "@/components/passport/stamp";
 import { useSerial } from "@/components/passport/serial";
@@ -9,6 +9,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { submitRsvp, type RsvpResult } from "@/lib/actions/rsvp";
 import { liveEnabled } from "@/lib/supabase/client";
 import { HONEYPOT } from "@/lib/validate";
+import { markVisa } from "@/lib/passport-log";
 import type { Attendance } from "@/lib/supabase/types";
 import { wedding } from "@/config/wedding";
 
@@ -69,6 +70,14 @@ export function Rsvp({
     base: declined ? 11 : -9,
     variant: declined ? 1 : 0,
   });
+
+  // Dicatat di halaman visa. Lewat effect, bukan di dalam penangan submit:
+  // yang mengirim formnya adalah `useActionState`, dan hasilnya baru diketahui
+  // pada render berikutnya. Tamu yang MENOLAK hadir tetap dapat capnya — yang
+  // diminta undangan ini adalah kabarnya, bukan kehadirannya.
+  useEffect(() => {
+    if (ok) markVisa(serial, "rsvp");
+  }, [ok, serial]);
 
   // Tanpa env Supabase, Server Action-nya pasti gagal. Lebih baik section ini
   // tidak ada sama sekali daripada memajang form yang menolak setiap kiriman.

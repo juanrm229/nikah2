@@ -12,6 +12,8 @@ import {
 } from "@/lib/actions/photos";
 import { liveEnabled, supabaseBrowser } from "@/lib/supabase/client";
 import { HONEYPOT } from "@/lib/validate";
+import { useSerial } from "@/components/passport/serial";
+import { markVisa } from "@/lib/passport-log";
 
 /**
  * Dinding kenangan — tamu menitipkan foto.
@@ -59,6 +61,7 @@ export function PhotoWall({
   guestName?: string | null;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const serial = useSerial();
   const [state, setState] = useState<State>({ status: "idle" });
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -141,6 +144,7 @@ export function PhotoWall({
     if (saved.status === "error") return setState({ status: "error", message: saved.message });
 
     setState({ status: "ok" });
+    markVisa(serial, "foto");
     pick(null);
     formRef.current?.reset();
   }

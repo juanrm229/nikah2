@@ -12,6 +12,7 @@ import { Gallery } from "@/components/sections/gallery";
 import { Rsvp } from "@/components/sections/rsvp";
 import { Songs } from "@/components/sections/songs";
 import { Guestbook } from "@/components/sections/guestbook";
+import { Visa } from "@/components/sections/visa";
 import { PhotoWall } from "@/components/sections/photo-wall";
 import { Gift } from "@/components/sections/gift";
 import { Closing } from "@/components/sections/closing";
@@ -157,6 +158,12 @@ export function Invitation({
         <Songs slug={guest?.slug ?? null} guestName={guest?.name} />
         <Guestbook slug={guest?.slug ?? null} guestName={guest?.name} />
         <PhotoWall slug={guest?.slug ?? null} guestName={guest?.name} />
+
+        {/* Halaman visa duduk SESUDAH semua yang bisa dicap, dan sebelum
+            penutup. Ia hanya masuk akal kalau tamu sudah melewati setiap
+            tempat yang bisa memberinya cap — ditaruh lebih awal, ia cuma
+            daftar tugas yang belum satu pun dikerjakan. */}
+        <Visa guestName={guest?.name ?? undefined} />
 
         {/* Saklarnya ada di konfigurasi, dan pengujiannya ada DI SINI supaya
             seluruh isi <Gift> tidak pernah ikut dirakit selama nomor rekening

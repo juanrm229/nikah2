@@ -6,6 +6,8 @@ import { Reveal } from "@/components/motion/reveal";
 import { submitSong, type SentSong } from "@/lib/actions/songs";
 import { liveEnabled } from "@/lib/supabase/client";
 import { HONEYPOT } from "@/lib/validate";
+import { useSerial } from "@/components/passport/serial";
+import { markVisa } from "@/lib/passport-log";
 
 /**
  * Request lagu — hiburan dalam kabin.
@@ -34,6 +36,7 @@ export function Songs({
   guestName?: string | null;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const serial = useSerial();
   const [state, setState] = useState<State>({ status: "idle" });
   const [sent, setSent] = useState<SentSong[]>([]);
 
@@ -69,6 +72,7 @@ export function Songs({
 
     setState({ status: "ok" });
     setSent((prev) => [...prev, result.song]);
+    markVisa(serial, "lagu");
 
     // Sobekannya dilepas SEBELUM kolomnya dikosongkan, supaya judul yang
     // tertulis di slip yang melayang masih judul yang barusan dikirim.

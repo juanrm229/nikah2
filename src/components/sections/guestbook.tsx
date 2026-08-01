@@ -7,6 +7,8 @@ import { IkatField } from "@/components/tenun/ikat";
 import { submitWish, type PublicWish, type WishResult } from "@/lib/actions/wishes";
 import { liveEnabled, supabaseBrowser } from "@/lib/supabase/client";
 import { HONEYPOT } from "@/lib/validate";
+import { useSerial } from "@/components/passport/serial";
+import { markVisa } from "@/lib/passport-log";
 
 /**
  * Buku tamu — ucapan sebagai label bagasi yang menggantung.
@@ -29,6 +31,7 @@ export function Guestbook({
   guestName?: string | null;
 }) {
   const [result, formAction, pending] = useActionState(submitWish.bind(null, slug), INITIAL);
+  const serial = useSerial();
   const [wishes, setWishes] = useState<PublicWish[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -83,6 +86,14 @@ export function Guestbook({
   // supaya tamu melihat tulisannya sendiri seketika di jaringan yang lambat.
   const own = result.status === "ok" && result.wish.id !== "honeypot" ? result.wish : null;
   const feed = own && !wishes.some((w) => w.id === own.id) ? [own, ...wishes] : wishes;
+
+  // Dicatat di halaman visa. Kiriman yang tertangkap jebakan bot sengaja TIDAK
+  // dihitung: `own` sudah menyaringnya, dan cap yang didapat robot adalah cap
+  // yang membuat cap tamu lain berarti lebih sedikit.
+  const earned = own !== null;
+  useEffect(() => {
+    if (earned) markVisa(serial, "ucapan");
+  }, [earned, serial]);
 
   if (!liveEnabled) return null;
 
