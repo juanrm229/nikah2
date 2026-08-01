@@ -51,6 +51,7 @@
   --font-body: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
   --font-arabic: var(--font-arabic), serif;
+  --font-hand: var(--font-hand), cursive;
 
   /* Ritme vertikal antar section */
   --spacing-section: 7rem;

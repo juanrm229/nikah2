@@ -1,5 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Jost, JetBrains_Mono, Amiri } from "next/font/google";
+import {
+  Cormorant_Garamond,
+  Jost,
+  JetBrains_Mono,
+  Amiri,
+  Mrs_Saint_Delafield,
+} from "next/font/google";
 import { wedding } from "@/config/wedding";
 import "./globals.css";
 
@@ -31,6 +37,22 @@ const arabic = Amiri({
   display: "swap",
 });
 
+/**
+ * Tanda tangan pemegang paspor — dipakai HANYA di balik pas foto, yang cuma
+ * terlihat kalau tamu mengangkat fotonya sendiri.
+ *
+ * `preload: false` disengaja: tidak ada gunanya menahan pemuatan halaman
+ * pertama demi huruf yang mungkin tidak pernah dilihat siapa pun. Peramban
+ * baru mengambilnya kalau ada yang benar-benar dirender.
+ */
+const hand = Mrs_Saint_Delafield({
+  variable: "--font-hand",
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  preload: false,
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(wedding.site.url),
   title: `${wedding.title} — Undangan Pernikahan`,
@@ -60,7 +82,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${display.variable} ${body.variable} ${mono.variable} ${arabic.variable} h-full`}
+      className={`${display.variable} ${body.variable} ${mono.variable} ${arabic.variable} ${hand.variable} h-full`}
     >
       <body className="min-h-full">{children}</body>
     </html>

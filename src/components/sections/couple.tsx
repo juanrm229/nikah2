@@ -3,6 +3,7 @@ import { wedding } from "@/config/wedding";
 import { PassportPage, Heading } from "@/components/passport/page";
 import { Stamp } from "@/components/passport/stamp";
 import { Reveal } from "@/components/motion/reveal";
+import { PhotoPeel } from "@/components/passport/photo-peel";
 import { IkatField } from "@/components/tenun/ikat";
 import { personMrz } from "@/lib/wedding-mrz";
 import { withSoftBreaks } from "@/lib/text";
@@ -86,16 +87,12 @@ function DataPage({
             memanjang — dan pas foto 132 px di sebelahnya akan terlihat seperti
             perangko yang tertinggal di sudut. Fotonya `object-cover`, jadi
             kotak setinggi apa pun tetap terisi rapi. */}
-        <div className="relative w-[clamp(92px,29vw,116px)] shrink-0 self-stretch overflow-hidden border border-ink/25 bg-ink/5">
-          <Image
-            src={person.photo}
-            alt={`Foto ${person.fullName}`}
-            fill
-            sizes="116px"
-            style={{ objectPosition: person.photoFocus }}
-            className="object-cover"
-          />
-        </div>
+        <PhotoPeel
+          src={person.photo}
+          focus={person.photoFocus}
+          alt={`Foto ${person.fullName}`}
+          signature={person.nickname}
+        />
 
         <dl className="min-w-0 flex-1 space-y-2.5">
           <Field label="Nama / Name" value={person.fullName} big />
