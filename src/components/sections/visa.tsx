@@ -7,6 +7,7 @@ import { IkatField } from "@/components/tenun/ikat";
 import { useSerial } from "@/components/passport/serial";
 import { stampTraits } from "@/lib/stamp";
 import { VISA_STAMPS, useVisa } from "@/lib/passport-log";
+import { VisaShare } from "@/components/sections/visa-share";
 
 /**
  * Halaman visa — cap yang dikumpulkan tamu sendiri.
@@ -25,6 +26,22 @@ import { VISA_STAMPS, useVisa } from "@/lib/passport-log";
 export function Visa({ guestName }: { guestName?: string }) {
   const serial = useSerial();
   const collected = useVisa(serial);
+  const bearer = guestName || "Tamu Undangan";
+
+  /**
+   * Satu daftar untuk dua tujuan: yang dirender di halaman, dan yang digambar
+   * ke kartu. Dihitung sekali di sini supaya sudut miring cap pada gambar
+   * benar-benar sudut yang sama dengan yang dilihat tamu di layarnya — dua
+   * perhitungan terpisah pasti akan berselisih pada suntingan pertama.
+   */
+  const stamps = VISA_STAMPS.map((stamp, i) => ({
+    ...stamp,
+    earned: collected.includes(stamp.id),
+    // Cap milik tamu ini, bukan cap contoh: sudut & belang tintanya dihitung
+    // dari nomor dokumennya. `variant` membuat empat cap di halaman yang sama
+    // tidak jadi empat kembar.
+    ...stampTraits(serial, { base: i % 2 ? 9 : -11, variant: i + 41 }),
+  }));
 
   return (
     <section id="visa" className="relative px-4 py-[clamp(4rem,12vh,7rem)]">
@@ -50,7 +67,7 @@ export function Visa({ guestName }: { guestName?: string }) {
               <div className="min-w-0">
                 <p className="field-label text-ink-soft/70">Pemegang</p>
                 <p className="display truncate text-[1.05rem] leading-tight text-ink">
-                  {guestName || "Tamu Undangan"}
+                  {bearer}
                 </p>
               </div>
               <div className="shrink-0 text-right">
@@ -60,12 +77,8 @@ export function Visa({ guestName }: { guestName?: string }) {
             </div>
 
             <ul className="relative grid grid-cols-2 gap-px bg-ink/10">
-              {VISA_STAMPS.map((stamp, i) => {
-                const earned = collected.includes(stamp.id);
-                // Cap milik tamu ini, bukan cap contoh: sudut & belang tintanya
-                // dihitung dari nomor dokumennya. `variant` membuat empat cap di
-                // halaman yang sama tidak jadi empat kembar.
-                const traits = stampTraits(serial, { base: i % 2 ? 9 : -11, variant: i + 41 });
+              {stamps.map((stamp) => {
+                const { earned } = stamp;
 
                 return (
                   <li
@@ -78,8 +91,8 @@ export function Visa({ guestName }: { guestName?: string }) {
                         top={stamp.top}
                         bottom={stamp.bottom}
                         center={stamp.center}
-                        rotate={traits.rotate}
-                        seed={traits.seed}
+                        rotate={stamp.rotate}
+                        seed={stamp.seed}
                         size={104}
                         serial={serial.slice(-4)}
                       />
@@ -116,6 +129,8 @@ export function Visa({ guestName }: { guestName?: string }) {
             </div>
           </div>
         </Reveal>
+
+        <VisaShare name={bearer} serial={serial} stamps={stamps} />
 
         <p className="mx-auto mt-5 max-w-[34ch] text-center text-[0.72rem] leading-relaxed font-light text-paper-dim/60">
           Cap tersimpan di peranti ini saja. Membuka undangan dari ponsel lain

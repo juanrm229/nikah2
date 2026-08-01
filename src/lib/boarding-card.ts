@@ -16,20 +16,10 @@
  * tinggal di halaman undangan, tempatnya memang di sana.
  */
 
+import { C, fitFontSize, setFont, svgImage, wrap } from "@/lib/card-paint";
+
 const W = 1080;
 const H = 1350;
-
-/** Warna diambil dari token yang sama dengan undangannya. */
-const C = {
-  cover: "#0e1526",
-  cover2: "#16203a",
-  paper: "#f2ede4",
-  paperDim: "#a89f8e",
-  gold: "#b08d4f",
-  gold2: "#d8b878",
-  gold3: "#8a6c39",
-  ink: "#12100e",
-};
 
 export type BoardingCardData = {
   name: string;
@@ -52,77 +42,6 @@ export type BoardingCardData = {
   emblemSvg: string | null;
   fonts: { display: string; mono: string; body: string };
 };
-
-/** Muat markup SVG jadi gambar yang bisa digambar ke canvas. */
-function svgImage(markup: string): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    // `encodeURIComponent`, bukan base64: markup-nya mengandung karakter di
-    // luar Latin-1 dan `btoa` melempar galat pada karakter pertama yang
-    // ditemuinya.
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`;
-  });
-}
-
-/** Setel font sekaligus jarak hurufnya, kalau peramban mendukung. */
-function setFont(
-  ctx: CanvasRenderingContext2D,
-  font: string,
-  spacing = "0px",
-) {
-  ctx.font = font;
-  // `letterSpacing` baru ada sejak Chrome 99 dan Safari 16.4. Peramban yang
-  // belum punya akan mengabaikan penugasan ini diam-diam, dan kartunya tetap
-  // terbentuk — hanya labelnya lebih rapat.
-  if ("letterSpacing" in ctx) {
-    (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = spacing;
-  }
-}
-
-/**
- * Susutkan ukuran huruf sampai teksnya muat.
- *
- * Nama tamu adalah satu-satunya isi kartu ini yang panjangnya tidak diketahui
- * di muka — "Andi" dan "Bapak Muhammad Syarifuddin Hidayatullah sekeluarga"
- * sama-sama sah. Memotongnya dengan elipsis bukan pilihan: nama tamu adalah hal
- * terakhir yang boleh dipangkas dari undangan.
- */
-function fitFontSize(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  family: string,
-  maxWidth: number,
-  start: number,
-  min: number,
-) {
-  let size = start;
-  while (size > min) {
-    ctx.font = `300 ${size}px ${family}`;
-    if (ctx.measureText(text).width <= maxWidth) break;
-    size -= 2;
-  }
-  return size;
-}
-
-/** Pecah teks jadi beberapa baris yang masing-masing muat. */
-function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
-  const words = text.split(/\s+/);
-  const lines: string[] = [];
-  let line = "";
-  for (const word of words) {
-    const next = line ? `${line} ${word}` : word;
-    if (ctx.measureText(next).width > maxWidth && line) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = next;
-    }
-  }
-  if (line) lines.push(line);
-  return lines;
-}
 
 export async function paintBoardingCard(d: BoardingCardData): Promise<Blob | null> {
   // Tunggu fontnya benar-benar siap. Canvas tidak menunggu apa pun: menggambar
